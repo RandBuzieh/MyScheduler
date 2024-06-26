@@ -18,7 +18,7 @@ namespace Scheduler.Data
         public DbSet<Schedule> Schedules { get; set; }
         public DbSet<Section> Sections { get; set; }
         public DbSet<SectionSchedule> sectionSchedules { get; set; }
-        public DbSet<Progress> Progresses { get; set; }
+        public DbSet<StudentsProgress> Progresses { get; set; }
         public DbSet<Instructor> Instructors { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

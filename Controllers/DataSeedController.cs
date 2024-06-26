@@ -803,7 +803,7 @@ namespace Scheduler.Controllers
                                 }
 
                                 // reader.GetDouble(0);
-                                Progress progress = new Progress();
+                                StudentsProgress progress = new StudentsProgress();
                                 progress.Mark = Convert.ToSingle(reader.GetValue(1));
                                 progress.Student = await _context.Students.FindAsync(Convert.ToInt32(reader.GetValue(2)));
                                 progress.course = await _context.Courses.FindAsync(Convert.ToInt32(reader.GetValue(3)));

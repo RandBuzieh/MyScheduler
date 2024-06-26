@@ -18,6 +18,6 @@ namespace Scheduler.Models
         public StudyPlan studyPlan { get; set; }
         public DegreeProgressPlan degreeProgressPlan { get; set; }
         public ICollection<Schedule> schedules { get; set; }
-        public ICollection<Progress> progresses { get; set; }
+        public ICollection<StudentsProgress> progresses { get; set; }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Scheduler.Data;
 
@@ -11,9 +12,11 @@ using Scheduler.Data;
 namespace Scheduler.Migrations
 {
     [DbContext(typeof(DBContextSystem))]
-    partial class DBContextSystemModelSnapshot : ModelSnapshot
+    [Migration("20240626085050_studentProgressTable")]
+    partial class studentProgressTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -337,32 +340,6 @@ namespace Scheduler.Migrations
                     b.ToTable("Students");
                 });
 
-            modelBuilder.Entity("Scheduler.Models.StudentsProgress", b =>
-                {
-                    b.Property<int>("IdProgress")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdProgress"));
-
-                    b.Property<float>("Mark")
-                        .HasColumnType("real");
-
-                    b.Property<int>("StudentKeyStudent")
-                        .HasColumnType("int");
-
-                    b.Property<int>("courseIDCRS")
-                        .HasColumnType("int");
-
-                    b.HasKey("IdProgress");
-
-                    b.HasIndex("StudentKeyStudent");
-
-                    b.HasIndex("courseIDCRS");
-
-                    b.ToTable("StudentsProgress");
-                });
-
             modelBuilder.Entity("Scheduler.Models.StudyPlan", b =>
                 {
                     b.Property<int>("IdStudyPlan")
@@ -511,25 +488,6 @@ namespace Scheduler.Migrations
                     b.Navigation("degreeProgressPlan");
 
                     b.Navigation("studyPlan");
-                });
-
-            modelBuilder.Entity("Scheduler.Models.StudentsProgress", b =>
-                {
-                    b.HasOne("Scheduler.Models.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentKeyStudent")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Scheduler.Models.Course", "course")
-                        .WithMany()
-                        .HasForeignKey("courseIDCRS")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Student");
-
-                    b.Navigation("course");
                 });
 
             modelBuilder.Entity("Scheduler.Models.Course", b =>

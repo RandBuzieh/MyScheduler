@@ -24,7 +24,7 @@ namespace Scheduler.Models
         public string Type {  get; set; }
         public ICollection <DegreeProgresContent> degree_Courses { get; set; }
         public ICollection<PlanContent> plan_content { get; set; }
-        public ICollection<Progress> progresses { get; set; }
+        public ICollection<StudentsProgress> progresses { get; set; }
 
         //public Progress Progress { get; set; }
 
