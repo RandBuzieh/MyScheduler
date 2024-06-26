@@ -1,0 +1,81 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    ViewData["Title"] = "Upload";
+    Layout = null;
+}
+
+<style>
+    .nav-item {
+        margin-bottom: 10px;
+    }
+
+    .nav-link {
+        font-weight: bold;
+        color: #333;
+    }
+
+        .nav-link:hover {
+            color: #0056b3; 
+            text-decoration: none; 
+        }
+
+    .sidIcon {
+        margin-right: 5px;
+    }
+</style>
+
+<h1>To Upload Excel file</h1>
+
+<div class="os-content">
+    <footer class="text-center py-3">
+        <ul class="menu show list-unstyled px-2">
+            <li class="nav-item">
+                <a class="nav-link text-dark active" asp-area="" asp-controller="DataSeed" asp-action="UploadExcelStudyPlan" data-tooltip="Upload Study Plan">
+                    Study Plan
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark active" asp-area="" asp-controller="DataSeed" asp-action="UploadExcelCourse" data-tooltip="Upload Course">
+                    Course
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark active" asp-area="" asp-controller="DataSeed" asp-action="UploadExcelInstructors" data-tooltip="Upload Instructors">
+                    Instructors
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark active" asp-area="" asp-controller="DataSeed" asp-action="UploadExcelPlanContent" data-tooltip="Upload Plan Content">
+                    Plan Content
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark active" asp-area="" asp-controller="DataSeed" asp-action="UploadExcelDegreeProgressPlan" data-tooltip="Upload Degree Progress Plan">
+                    Degree Progress Plan
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark active" asp-area="" asp-controller="DataSeed" asp-action="UploadExcelDegreeProgresContent" data-tooltip="Upload Degree Progres Content">
+                    Degree Progres Content
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark active" asp-area="" asp-controller="DataSeed" asp-action="UploadExcelStudent" data-tooltip="Upload Student">
+                    Student
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark active" asp-area="" asp-controller="DataSeed" asp-action="UploadExcelSection" data-tooltip="Upload Section">
+                    Section
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-dark active" asp-area="" asp-controller="DataSeed" asp-action="UploadExcelProgress" data-tooltip="Upload Progress">
+                    Progress
+                </a>
+            </li>
+        </ul>
+    </footer>
+</div>

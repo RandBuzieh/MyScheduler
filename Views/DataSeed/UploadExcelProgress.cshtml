@@ -1,0 +1,377 @@
+﻿@{
+    Layout = null;
+}
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+@if (!string.IsNullOrEmpty(ViewBag.Message) && ViewBag.Message == "success")
+{
+    <div class="alert alert-success" role="alert">
+        All records inserted successfully
+    </div>
+}
+else if (!string.IsNullOrEmpty(ViewBag.Message) && ViewBag.Message == "empty")
+{
+    <div class="alert alert-warning" role="alert">
+        File is empty
+    </div>
+}
+
+<form method="post" enctype="multipart/form-data">
+    <div class="row">
+        <label>Select Excel File</label>
+        <input type="file" name="file" />
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-3">
+            <input type="submit" asp-controller="DataSeed" asp-action="UploadExcelProgress" class="btn btn-dark" value="Upload Excel File" />
+        </div>
+    </div>
+    <div class="col-3">
+        <input type="submit" asp-controller="DataSeed" asp-action="Index" class="btn btn-secondary" value="List for Upload Excel" />
+    </div>
+</form>
+
+
+
+
+
+
+
+
+
+
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using MyGP2webapp.Data;
+using MyGP2webapp.Models;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
+using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
+ 
+namespace MyGP2webapp.Controllers
+{
+    public class StudentController : Controller
+    {
+        private readonly DBContextSystem _context;
+        public static Student? student;
+        public List<Section> Sections { get; set; }
+        public int totalCreditHours;
+        public int semester;
+        public int year;
+        public bool ready;
+        public List<Course> coursesFor2 = new List<Course>();
+ 
+        public StudentController(DBContextSystem context)
+        {
+            _context = context;
+        }
+ 
+        public IActionResult Index()
+        {
+            return View();
+        }
+ 
+        [HttpGet]
+        public IActionResult Login()
+        {
+            return View();
+        }
+ 
+        [HttpPost]
+        public IActionResult Login(LoginStuden userLogin)
+        {
+            if (ModelState.IsValid)
+            {
+                student = _context.Students.FirstOrDefault(u => u.Email.Equals(userLogin.Email) && u.password.Equals(userLogin.password));
+ 
+                if (student != null)
+                {
+                    char firstCher = student.Name.FirstOrDefault();
+                    TempData["MasgName"] = $"{firstCher}";
+                    TempData.Keep("MasgName");
+                    return RedirectToAction("DisplaySchedules", "Student");
+                }
+                TempData["Msg"] = "Invalid email or password";
+            }
+            return View();
+ 
+        }
+ 
+        public String SendName()
+        {
+            return student.Name;
+        }
+ 
+        public bool isReady()
+        { return ready; }
+ 
+        //Check if the registration is open 
+        public bool isOpen()
+        { return true; }
+ 
+        public (int Year, int Semester) CalculateYearAndSemester()
+        {
+            double totalCompletedCreditHours = _context.progresses
+                .Where(p => p.Student.KeyStudent == student.KeyStudent)
+                .Join(_context.Courses, p => p.course.IDCRS, c => c.IDCRS, (p, c) => c.CRS_CR_HOURS)
+                .Sum();
+ 
+            int totalCreditHours = 132;
+            int semesters = 8;
+            double creditHoursPerSemester = totalCreditHours / (double)semesters;
+ 
+            int currentSemester = (int)Math.Ceiling(totalCompletedCreditHours / creditHoursPerSemester);
+            int year = (currentSemester + 1) / 2;
+            int semester = (currentSemester % 2 == 0) ? 2 : 1;
+            if (year == 4 && semester == 2)
+            {
+                float completedTraining = _context.progresses
+                    .Where(p => p.Student.KeyStudent == student.KeyStudent && p.course.IDCRS == 51)
+                    .Select(p => p.Mark)
+                    .FirstOrDefault();
+ 
+                if (completedTraining >= 50.0f)
+                {
+                    return (131, 131);
+                }
+                return (132, 132);
+            }
+            else if (year == 0)
+            {
+                return (1, 1);
+            }
+            else
+            {
+                if (semester == 2)
+                {
+                    return (++year, --semester);
+                }
+                else if (semester == 1)
+                {
+                    return (year, ++semester);
+                }
+            }
+            return (year, semester);
+ 
+        }
+ 
+        public List<Course> GetAvailableCourses()
+        {
+            // Fetch completed course IDs for the student
+            var completedCourseIds = _context.progresses
+                .Where(p => p.Student.KeyStudent == student.KeyStudent)
+                .Select(p => p.course.IDCRS)
+                .ToList();
+ 
+            // Fetch all courses the student can take based on the current semester and year
+            var availableCourses = _context.degree_Contents
+                .Where(dc => (dc.SMST_NO == semester && dc.SPEC_LVL == year) || dc.SPEC_LVL < year)
+                .Select(dc => dc.course)
+                .ToList();
+ 
+            var coursesWithPrerequisites = _context.plan_Content
+                .Where(pc => availableCourses.Select(c => c.IDCRS).Contains(pc.course.IDCRS))
+                .ToList();
+ 
+            // Filter courses that the student can take based on prerequisites
+            var coursesStudentCanTake = new List<Course>();
+ 
+            foreach (var course in availableCourses)
+            {
+                var coursePlanContent = coursesWithPrerequisites.FirstOrDefault(pc => pc.course.IDCRS == course.IDCRS);
+ 
+                if (coursePlanContent != null)
+                {
+                    // Check if the course has a prerequisite and if the student has completed it
+                    if (coursePlanContent.prerequisite == 0 || completedCourseIds.Contains(coursePlanContent.prerequisite.Value))
+                    {
+                        coursesStudentCanTake.Add(course);
+                    }
+                }
+                else
+                {
+                    // If no PlanContent is found for the course, assume it has no prerequisites
+                    coursesStudentCanTake.Add(course);
+                }
+            }
+ 
+            return coursesStudentCanTake;
+        }
+ 
+        public void MakeScheduler()
+        {
+            List<List<Section>> possibleSchedules = new List<List<Section>>();
+ 
+            // Step 1: Get all sections for each course
+            var allSections = new List<Section>();
+            foreach (var course in coursesFor2)
+            {
+                var sectionsForCourse = _context.sections.Where(s => s.course.IDCRS == course.IDCRS).ToList();
+ 
+                if (sectionsForCourse.Any(s => s.Status == "open"))
+                {
+                    allSections.AddRange(sectionsForCourse.Where(s => s.Status == "open"));
+                }
+                else
+                {
+                    // If all sections for a course are closed, set ready flag to false
+                    ready = false;
+                    return;
+                }
+            }
+            // Step 2: Generate possible schedules
+            possibleSchedules = new List<List<Section>>();
+            GenerateSchedulesRecursive(allSections, new List<Section>(), possibleSchedules);
+            if (possibleSchedules.Any())
+            {
+                ready = true;
+            }
+            else
+            {
+                ready = false;
+            }
+            DisplaySchedules(possibleSchedules);
+            // Display or do something with the schedules
+        }
+ 
+ 
+        // Frontend View to Display Schedules
+        public IActionResult DisplaySchedules(List<List<Section>> possibleSchedules)
+        {
+            if (possibleSchedules.Count==0)
+            {
+                ready=false;
+                // Handle the case where no schedules were generated because all sections for some courses are closed
+                return View();
+            }
+            ready = true;
+            // Pass the list of possible schedules to the view
+            return View(possibleSchedules);
+        }
+ 
+        private void GenerateSchedulesRecursive(List<Section> remainingSections, List<Section> currentSchedule, List<List<Section>> possibleSchedules)
+        {
+            if (remainingSections.Count == 0)
+            {
+                // Base case: No more sections to add, add the current schedule to the list of possible schedules
+                possibleSchedules.Add(new List<Section>(currentSchedule));
+                return;
+            }
+ 
+            var currentSection = remainingSections.First();
+            remainingSections.RemoveAt(0);
+ 
+            // Check if the current section conflicts with any section in the current schedule
+            if (!currentSchedule.Any(s => IsConflicting(s, currentSection)))
+            {
+                // Add the current section to the current schedule
+                currentSchedule.Add(currentSection);
+ 
+                // Recursively call GenerateSchedules with the updated lists
+                GenerateSchedulesRecursive(remainingSections, currentSchedule, possibleSchedules);
+ 
+                // Backtrack: Remove the current section from the current schedule
+                currentSchedule.Remove(currentSection);
+            }
+ 
+            // Recursively call GenerateSchedules with the remaining sections
+            GenerateSchedulesRecursive(remainingSections, currentSchedule, possibleSchedules);
+        }
+ 
+        public bool IsConflicting(Section section, Section otherSection)
+        {
+            if (section.Start_Sunday != null && otherSection.Start_Sunday != null)
+            {
+                if (!(section.Start_Sunday >= otherSection.End_Sunday || section.End_Sunday <= otherSection.Start_Sunday))
+                {
+                    return true;
+                }
+            }
+ 
+            if (section.Start_Monday != null && otherSection.Start_Monday != null)
+            {
+                if (!(section.Start_Monday >= otherSection.End_Monday || section.End_Monday <= otherSection.Start_Monday))
+                {
+                    return true;
+                }
+            }
+ 
+            if (section.Start_Tuesday != null && otherSection.Start_Tuesday != null)
+            {
+                if (!(section.Start_Tuesday >= otherSection.End_Tuesday || section.End_Tuesday <= otherSection.Start_Tuesday))
+                {
+                    return true;
+                }
+            }
+ 
+            if (section.Start_Wednesday != null && otherSection.Start_Wednesday != null)
+            {
+                if (!(section.Start_Wednesday >= otherSection.End_Wednesday || section.End_Wednesday <= otherSection.Start_Wednesday))
+                {
+                    return true;
+                }
+            }
+ 
+            if (section.Start_Thursday != null && otherSection.Start_Thursday != null)
+            {
+                if (!(section.Start_Thursday >= otherSection.End_Thursday || section.End_Thursday <= otherSection.Start_Thursday))
+                {
+                    return true;
+                }
+            }
+ 
+            return false;
+        }
+ 
+        //public bool RegisterSchedule(Schedule schedule)
+        //{
+        //    // remove student key
+        //    var registeredSchedule = _context.sectionSchedules
+        //        .Where(s => s.schedule.students.KeyStudent == student.KeyStudent && schedule.IDScedule == s.schedule.IDScedule)
+        //        .Select(s => s.section)
+        //        .ToList();
+        //    foreach (var sec in registeredSchedule)
+        //    {
+        //        if (!IsSectionOpen(sec))
+        //        {
+        //            ViewBag.message = $"there is a closed section {sec.Course.CRS_A_NAME}";
+        //            return false;
+        //        }
+        //    }
+        //    var oldSchedule = _context.Schedules
+        //        .Where(s => s.Students.KeyStudent == student.KeyStudent && s.Approv_Schedule == 1)
+        //        .ToList();
+        //    if (oldSchedule.Any())
+        //    {
+        //        _context.Schedules.RemoveRange(oldSchedule);
+        //        _context.SaveChanges();
+        //    }
+        //    schedule.Approv_Schedule = 1;
+        //    _context.Schedules.Add(schedule);
+        //    _context.SaveChanges();
+ 
+        //    ViewBag.message = $"Your schedule is registered successfully";
+        //    return true;
+        //}
+ 
+    
+ 
+    public void AddToFavList(Schedule schedule)
+        {
+            _context.schedules.Add(schedule);
+            _context.SaveChanges();
+        }
+        public IActionResult FavList()
+        {
+            return View();
+        }
+ 
+        public void RemoveFromWishlist(Schedule schedule)
+        {
+            _context.schedules.Remove(schedule);
+            _context.SaveChanges();
+        }
+ 
+    }
