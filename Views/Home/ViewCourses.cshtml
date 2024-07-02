@@ -37,7 +37,7 @@ else{
 
 
 @{
-    List<Course> studyPlanCourses = ViewBag.StudyPlanCourses as List<Course>;
+    List<Course> studyPlanCourses = ViewBag.studyPlanCourses as List<Course>;
 }
 
 <h1>Select Coursess</h1>
@@ -46,7 +46,7 @@ else{
     @foreach (var c in studyPlanCourses)
     {
         <div>
-            <input type="checkbox" name="course" value="@c">
+            <input type="checkbox" name="selectedCourseIds" value="@c.IDCRS">
             <label>@c.CRS_A_NAME</label>
         </div>
     }

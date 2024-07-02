@@ -12,8 +12,8 @@ using Scheduler.Data;
 namespace Scheduler.Migrations
 {
     [DbContext(typeof(DBContextSystem))]
-    [Migration("20240630102416_inial")]
-    partial class inial
+    [Migration("20240702075858_m1")]
+    partial class m1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

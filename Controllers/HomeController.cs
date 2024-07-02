@@ -55,7 +55,7 @@ namespace Scheduler.Controllers
         }
 
         [HttpPost]
-        public IActionResult Login(LoginStuden userLogin)
+        public async Task<IActionResult> LoginAsync(LoginStuden userLogin)
         {
             if (ModelState.IsValid)
             {
@@ -66,6 +66,7 @@ namespace Scheduler.Controllers
                     char firstCher = student.Name.FirstOrDefault();
                     TempData["MasgName"] = $"{firstCher}";
                     TempData.Keep("MasgName");
+
                     return RedirectToAction("ViewCourses", "Home");
                 }
                 TempData["Msg"] = "Invalid email or password";
@@ -74,9 +75,7 @@ namespace Scheduler.Controllers
 
         }
 
-        public async
-        Task
-CalculateYearAndSemester()
+        public async Task CalculateYearAndSemester()
         {
 
             double totalCompletedCreditHours = _context.StudentsProgress
@@ -146,11 +145,7 @@ CalculateYearAndSemester()
         }
         public async Task GetAvailableCoursesAsync()
         {
-            coursesFor2.Clear();
-            electiveCourses.Clear();
-            studyPlanCourses.Clear();
-            majorElectiveCourses.Clear();
-            possibleSchedules.Clear();
+
 
             var completedCourseIds = FinishedCourses();
 
@@ -213,25 +208,25 @@ CalculateYearAndSemester()
 
                 if (type != null && !addedCourseIds.Contains(course.IDCRS))
                 {
-                    if (type.SMST_NO == 0 && type.SPEC_LVL == 0)
-                    {
-                        electiveCourses.Add(course);
-                    }
-                    else if (type.SMST_NO == 5 && type.SPEC_LVL == 5)
-                    {
-                        majorElectiveCourses.Add(course);
-                    }
-                    else
-                    {
+                    //if (type.SMST_NO == 0 && type.SPEC_LVL == 0)
+                    //{
+                    //    electiveCourses.Add(course);
+                    //}
+                    //else if (type.SMST_NO == 5 && type.SPEC_LVL == 5)
+                    //{
+                    //    majorElectiveCourses.Add(course);
+                    //}
+                    //else
+                    //{
                         studyPlanCourses.Add(course);
-                    }
+                    //}
                     addedCourseIds.Add(course.IDCRS);
                 }
             }
         }
 
         [HttpGet]
-        public async Task<IActionResult> ViewCoursesAsync()
+        public async Task<IActionResult> ViewCourses()
         {
             await CalculateYearAndSemester();
             await GetAvailableCoursesAsync();
@@ -241,15 +236,17 @@ CalculateYearAndSemester()
             return View();
         }
         [HttpPost]
-        public IActionResult ViewCourses(List<Course> course)
+        public IActionResult ViewCourses(List<int> selectedCourseIds)
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.Result = course;
-
                 return View();
             }
-            return RedirectToAction("TestCourse");
+
+            var selectedCourses = studyPlanCourses.Where(c => selectedCourseIds.Contains(c.IDCRS)).ToList();
+            ViewBag.Result = selectedCourses;
+
+            return View("TestCourse");
         }
         public IActionResult TestCourse()
         {
