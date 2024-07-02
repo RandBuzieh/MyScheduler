@@ -17,12 +17,7 @@ namespace Scheduler.Controllers
         public static bool ready;
 
         public static List<int> completedCourseIds;
-        public static List<Course> coursesFor2 = new List<Course>();
         public static List<Course> studyPlanCourses = new List<Course>();
-        public static List<Course> electiveCourses = new List<Course>();
-        public static List<Course> majorElectiveCourses = new List<Course>();
-        public static int electiveHours = 0;
-        public static int majorElectiveHours = 0;
         public static List<List<Section>> possibleSchedules = new List<List<Section>>();
         private readonly ILogger<HomeController> _logger;
 
@@ -30,7 +25,6 @@ namespace Scheduler.Controllers
         {
             _context = context;
         }
-
         public IActionResult Index()
         {
             return View();
@@ -40,14 +34,11 @@ namespace Scheduler.Controllers
         {
             return View();
         }
-
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
-
-
         [HttpGet]
         public IActionResult Login()
         {
@@ -155,19 +146,6 @@ namespace Scheduler.Controllers
                 .Distinct()
                 .ToList();
 
-            majorElectiveHours = _context.DegreeProgresContents
-                .Where(dc => completedCourseIds.Contains(dc.course.IDCRS))
-                .Where(dc => dc.SMST_NO == 5 && dc.SPEC_YYT == 5)
-                .Select(dc => dc.course.CRS_CR_HOURS)
-                .Distinct()
-                .Sum();
-
-            electiveHours = _context.DegreeProgresContents
-                .Where(dc => completedCourseIds.Contains(dc.course.IDCRS))
-                .Where(dc => dc.SMST_NO == 0 && dc.SPEC_LVL == 0)
-                .Select(dc => dc.course.CRS_CR_HOURS)
-                .Distinct()
-                .Sum();
 
             // Remove courses that need a prerequisite
             var coursesStudentCanTake = new List<Course>();
@@ -191,38 +169,14 @@ namespace Scheduler.Controllers
                 .FirstOrDefault();
 
             // Fetch courses from the student's study plan
-            var studyPlanCanTakeCourses = _context.PlanContents
+            studyPlanCourses = _context.PlanContents
                 .Where(pc => pc.StudyPlan.IdStudyPlan == studyPlanId)
                 .Where(pc => coursesStudentCanTake.Contains(pc.course))
                 .Select(pc => pc.course)
                 .Distinct()
                 .ToList();
 
-            var addedCourseIds = new HashSet<int>();
-            foreach (var course in studyPlanCanTakeCourses)
-            {
-                var type = _context.DegreeProgresContents
-                    .Where(dc => dc.course.IDCRS == course.IDCRS)
-                    .Select(dc => new { dc.SMST_NO, dc.SPEC_LVL })
-                    .FirstOrDefault();
-
-                if (type != null && !addedCourseIds.Contains(course.IDCRS))
-                {
-                    //if (type.SMST_NO == 0 && type.SPEC_LVL == 0)
-                    //{
-                    //    electiveCourses.Add(course);
-                    //}
-                    //else if (type.SMST_NO == 5 && type.SPEC_LVL == 5)
-                    //{
-                    //    majorElectiveCourses.Add(course);
-                    //}
-                    //else
-                    //{
-                        studyPlanCourses.Add(course);
-                    //}
-                    addedCourseIds.Add(course.IDCRS);
-                }
-            }
+           
         }
 
         [HttpGet]
@@ -231,8 +185,7 @@ namespace Scheduler.Controllers
             await CalculateYearAndSemester();
             await GetAvailableCoursesAsync();
             ViewBag.studyPlanCourses = studyPlanCourses;
-            ViewBag.majorElectiveCourses = majorElectiveCourses;
-            ViewBag.electiveCourses = electiveCourses;
+            
             return View();
         }
         [HttpPost]
@@ -253,5 +206,6 @@ namespace Scheduler.Controllers
             
             return View();
         }
+
     }
 }
