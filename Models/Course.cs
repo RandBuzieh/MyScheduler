@@ -26,7 +26,7 @@ namespace Scheduler.Models
         public ICollection<PlanContent> plan_content { get; set; }
         public ICollection<StudentsProgress> progresses { get; set; }
 
-        //public Progress Progress { get; set; }
+        //public StudentsProgress StudentsProgress { get; set; }
 
     }
 }

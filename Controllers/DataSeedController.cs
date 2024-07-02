@@ -437,7 +437,7 @@ namespace Scheduler.Controllers
                                 degreeProgresContent.course = await _context.Courses.FindAsync(courseId);
 
                                 int planId = Convert.ToInt32(reader.GetValue(2).ToString());
-                                degreeProgresContent.DegreeProgressPlan = await _context.degreeProgressPlans.FindAsync(planId);
+                                degreeProgresContent.DegreeProgressPlan = await _context.DegreeProgressPlans.FindAsync(planId);
 
                                 degreeProgresContent.SPEC_CODE = Convert.ToInt32(reader.GetValue(3).ToString());
                                 degreeProgresContent.SMST_NO = Convert.ToInt32(reader.GetValue(4).ToString());
@@ -515,7 +515,7 @@ namespace Scheduler.Controllers
                                 student.studyPlan = await _context.StudyPlans.FindAsync(studyPlanId);
 
                                 int planId = Convert.ToInt32(reader.GetValue(6).ToString());
-                                student.degreeProgressPlan = await _context.degreeProgressPlans.FindAsync(planId);
+                                student.degreeProgressPlan = await _context.DegreeProgressPlans.FindAsync(planId);
 
                                 _context.Add(student);
                                 await _context.SaveChangesAsync();

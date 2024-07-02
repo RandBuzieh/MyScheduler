@@ -12,8 +12,8 @@ using Scheduler.Data;
 namespace Scheduler.Migrations
 {
     [DbContext(typeof(DBContextSystem))]
-    [Migration("20240626085419_studentProgressTable2")]
-    partial class studentProgressTable2
+    [Migration("20240630102416_inial")]
+    partial class inial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -116,7 +116,7 @@ namespace Scheduler.Migrations
 
                     b.HasKey("IDDegreeProgressPlan");
 
-                    b.ToTable("degreeProgressPlans");
+                    b.ToTable("DegreeProgressPlans");
                 });
 
             modelBuilder.Entity("Scheduler.Models.Instructor", b =>
@@ -166,32 +166,6 @@ namespace Scheduler.Migrations
                     b.HasIndex("IdStudyPlan");
 
                     b.ToTable("PlanContents");
-                });
-
-            modelBuilder.Entity("Scheduler.Models.Progress", b =>
-                {
-                    b.Property<int>("IdProgress")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdProgress"));
-
-                    b.Property<float>("Mark")
-                        .HasColumnType("real");
-
-                    b.Property<int>("StudentKeyStudent")
-                        .HasColumnType("int");
-
-                    b.Property<int>("courseIDCRS")
-                        .HasColumnType("int");
-
-                    b.HasKey("IdProgress");
-
-                    b.HasIndex("StudentKeyStudent");
-
-                    b.HasIndex("courseIDCRS");
-
-                    b.ToTable("Progresses");
                 });
 
             modelBuilder.Entity("Scheduler.Models.Schedule", b =>
@@ -299,7 +273,7 @@ namespace Scheduler.Migrations
 
                     b.HasIndex("IDSection");
 
-                    b.ToTable("sectionSchedules");
+                    b.ToTable("SectionSchedules");
                 });
 
             modelBuilder.Entity("Scheduler.Models.Student", b =>
@@ -429,25 +403,6 @@ namespace Scheduler.Migrations
                     b.Navigation("course");
                 });
 
-            modelBuilder.Entity("Scheduler.Models.Progress", b =>
-                {
-                    b.HasOne("Scheduler.Models.Student", "Student")
-                        .WithMany("progresses")
-                        .HasForeignKey("StudentKeyStudent")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Scheduler.Models.Course", "course")
-                        .WithMany("progresses")
-                        .HasForeignKey("courseIDCRS")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Student");
-
-                    b.Navigation("course");
-                });
-
             modelBuilder.Entity("Scheduler.Models.Schedule", b =>
                 {
                     b.HasOne("Scheduler.Models.Student", "students")
@@ -519,13 +474,13 @@ namespace Scheduler.Migrations
             modelBuilder.Entity("Scheduler.Models.StudentsProgress", b =>
                 {
                     b.HasOne("Scheduler.Models.Student", "Student")
-                        .WithMany()
+                        .WithMany("progresses")
                         .HasForeignKey("StudentKeyStudent")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Scheduler.Models.Course", "course")
-                        .WithMany()
+                        .WithMany("progresses")
                         .HasForeignKey("courseIDCRS")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

@@ -1,0 +1,54 @@
+﻿@* @model List<int>
+
+@{
+    List<Course> studyPlanCourses = ViewBag.StudyPlanCourses as List<Course>;
+    List<Course> selectedCourses = ViewBag.Result as List<Course>;
+}
+
+<form class="login-form" asp-controller="Home" asp-action="ViewCourses" method="post">
+    <h1>Select Study Plan Courses</h1>
+    @foreach (var c in studyPlanCourses)
+    {
+        <input type="checkbox" name="selectedCourses" value="@c.IDCRS" />
+        <label>@c.CRS_A_NAME</label>
+    }
+    <input class="submit" type="submit" value="Submit" />
+</form>
+
+<h2>courses submit</h2>
+@if (selectedCourses != null && selectedCourses.Any())
+{
+    <div>
+        <h2>Selected Courses</h2>
+        <ul>
+            @foreach (var c in selectedCourses)
+            {
+                <li>@c.CRS_A_NAME</li>
+            }
+        </ul>
+    </div>
+}
+else{
+    <h1>
+        no courses
+    </h1>
+} *@
+
+
+
+@{
+    List<Course> studyPlanCourses = ViewBag.StudyPlanCourses as List<Course>;
+}
+
+<h1>Select Coursess</h1>
+
+<form asp-controller="Home" asp-action="ViewCourses" method="post">
+    @foreach (var c in studyPlanCourses)
+    {
+        <div>
+            <input type="checkbox" name="course" value="@c">
+            <label>@c.CRS_A_NAME</label>
+        </div>
+    }
+    <button type="submit">Submit</button>
+</form>

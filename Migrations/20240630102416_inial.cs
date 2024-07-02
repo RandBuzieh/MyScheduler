@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Scheduler.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class inial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,7 +30,7 @@ namespace Scheduler.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "degreeProgressPlans",
+                name: "DegreeProgressPlans",
                 columns: table => new
                 {
                     IDDegreeProgressPlan = table.Column<int>(type: "int", nullable: false)
@@ -41,7 +41,7 @@ namespace Scheduler.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_degreeProgressPlans", x => x.IDDegreeProgressPlan);
+                    table.PrimaryKey("PK_DegreeProgressPlans", x => x.IDDegreeProgressPlan);
                 });
 
             migrationBuilder.CreateTable(
@@ -96,9 +96,9 @@ namespace Scheduler.Migrations
                         principalColumn: "IDCRS",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_DegreeProgresContents_degreeProgressPlans_IDDegreeProgressPlan",
+                        name: "FK_DegreeProgresContents_DegreeProgressPlans_IDDegreeProgressPlan",
                         column: x => x.IDDegreeProgressPlan,
-                        principalTable: "degreeProgressPlans",
+                        principalTable: "DegreeProgressPlans",
                         principalColumn: "IDDegreeProgressPlan",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -187,43 +187,16 @@ namespace Scheduler.Migrations
                 {
                     table.PrimaryKey("PK_Students", x => x.KeyStudent);
                     table.ForeignKey(
+                        name: "FK_Students_DegreeProgressPlans_degreeProgressPlanIDDegreeProgressPlan",
+                        column: x => x.degreeProgressPlanIDDegreeProgressPlan,
+                        principalTable: "DegreeProgressPlans",
+                        principalColumn: "IDDegreeProgressPlan",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_Students_StudyPlans_studyPlanIdStudyPlan",
                         column: x => x.studyPlanIdStudyPlan,
                         principalTable: "StudyPlans",
                         principalColumn: "IdStudyPlan",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Students_degreeProgressPlans_degreeProgressPlanIDDegreeProgressPlan",
-                        column: x => x.degreeProgressPlanIDDegreeProgressPlan,
-                        principalTable: "degreeProgressPlans",
-                        principalColumn: "IDDegreeProgressPlan",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Progresses",
-                columns: table => new
-                {
-                    IdProgress = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Mark = table.Column<float>(type: "real", nullable: false),
-                    StudentKeyStudent = table.Column<int>(type: "int", nullable: false),
-                    courseIDCRS = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Progresses", x => x.IdProgress);
-                    table.ForeignKey(
-                        name: "FK_Progresses_Courses_courseIDCRS",
-                        column: x => x.courseIDCRS,
-                        principalTable: "Courses",
-                        principalColumn: "IDCRS",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Progresses_Students_StudentKeyStudent",
-                        column: x => x.StudentKeyStudent,
-                        principalTable: "Students",
-                        principalColumn: "KeyStudent",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -248,7 +221,34 @@ namespace Scheduler.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "sectionSchedules",
+                name: "StudentsProgress",
+                columns: table => new
+                {
+                    IdProgress = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Mark = table.Column<float>(type: "real", nullable: false),
+                    StudentKeyStudent = table.Column<int>(type: "int", nullable: false),
+                    courseIDCRS = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StudentsProgress", x => x.IdProgress);
+                    table.ForeignKey(
+                        name: "FK_StudentsProgress_Courses_courseIDCRS",
+                        column: x => x.courseIDCRS,
+                        principalTable: "Courses",
+                        principalColumn: "IDCRS",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StudentsProgress_Students_StudentKeyStudent",
+                        column: x => x.StudentKeyStudent,
+                        principalTable: "Students",
+                        principalColumn: "KeyStudent",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SectionSchedules",
                 columns: table => new
                 {
                     IDSS = table.Column<int>(type: "int", nullable: false)
@@ -258,15 +258,15 @@ namespace Scheduler.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_sectionSchedules", x => x.IDSS);
+                    table.PrimaryKey("PK_SectionSchedules", x => x.IDSS);
                     table.ForeignKey(
-                        name: "FK_sectionSchedules_Schedules_IDScedule",
+                        name: "FK_SectionSchedules_Schedules_IDScedule",
                         column: x => x.IDScedule,
                         principalTable: "Schedules",
                         principalColumn: "IDScedule",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_sectionSchedules_Sections_IDSection",
+                        name: "FK_SectionSchedules_Sections_IDSection",
                         column: x => x.IDSection,
                         principalTable: "Sections",
                         principalColumn: "IDSection",
@@ -294,16 +294,6 @@ namespace Scheduler.Migrations
                 column: "IdStudyPlan");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Progresses_courseIDCRS",
-                table: "Progresses",
-                column: "courseIDCRS");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Progresses_StudentKeyStudent",
-                table: "Progresses",
-                column: "StudentKeyStudent");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Schedules_studentsKeyStudent",
                 table: "Schedules",
                 column: "studentsKeyStudent");
@@ -319,13 +309,13 @@ namespace Scheduler.Migrations
                 column: "InstructorsIdInstructor");
 
             migrationBuilder.CreateIndex(
-                name: "IX_sectionSchedules_IDScedule",
-                table: "sectionSchedules",
+                name: "IX_SectionSchedules_IDScedule",
+                table: "SectionSchedules",
                 column: "IDScedule");
 
             migrationBuilder.CreateIndex(
-                name: "IX_sectionSchedules_IDSection",
-                table: "sectionSchedules",
+                name: "IX_SectionSchedules_IDSection",
+                table: "SectionSchedules",
                 column: "IDSection");
 
             migrationBuilder.CreateIndex(
@@ -337,6 +327,16 @@ namespace Scheduler.Migrations
                 name: "IX_Students_studyPlanIdStudyPlan",
                 table: "Students",
                 column: "studyPlanIdStudyPlan");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StudentsProgress_courseIDCRS",
+                table: "StudentsProgress",
+                column: "courseIDCRS");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StudentsProgress_StudentKeyStudent",
+                table: "StudentsProgress",
+                column: "StudentKeyStudent");
         }
 
         /// <inheritdoc />
@@ -349,10 +349,10 @@ namespace Scheduler.Migrations
                 name: "PlanContents");
 
             migrationBuilder.DropTable(
-                name: "Progresses");
+                name: "SectionSchedules");
 
             migrationBuilder.DropTable(
-                name: "sectionSchedules");
+                name: "StudentsProgress");
 
             migrationBuilder.DropTable(
                 name: "Schedules");
@@ -370,10 +370,10 @@ namespace Scheduler.Migrations
                 name: "Instructors");
 
             migrationBuilder.DropTable(
-                name: "StudyPlans");
+                name: "DegreeProgressPlans");
 
             migrationBuilder.DropTable(
-                name: "degreeProgressPlans");
+                name: "StudyPlans");
         }
     }
 }
