@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Scheduler.Data;
 using Scheduler.Models;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Scheduler.Controllers
 {
@@ -18,6 +19,11 @@ namespace Scheduler.Controllers
 
         public static List<int> completedCourseIds;
         public static List<Course> studyPlanCourses = new List<Course>();
+        public static List<Section> availableSections = new List<Section>();
+
+        public static List<Course> selectedCourses = new List<Course>();
+        public static List<Instructor> selectedInstructors = new List<Instructor>();
+
         public static List<List<Section>> possibleSchedules = new List<List<Section>>();
         private readonly ILogger<HomeController> _logger;
 
@@ -196,14 +202,39 @@ namespace Scheduler.Controllers
                 return View();
             }
 
-            var selectedCourses = studyPlanCourses.Where(c => selectedCourseIds.Contains(c.IDCRS)).ToList();
-            ViewBag.Result = selectedCourses;
+             selectedCourses = studyPlanCourses.Where(c => selectedCourseIds.Contains(c.IDCRS)).ToList();
+           
 
-            return View("TestCourse");
+            return View("ChooseInstructors");
         }
-        public IActionResult TestCourse()
+        [HttpGet]
+        public async Task<IActionResult> ChooseInstructors()
         {
-            
+            availableSections = _context.Sections
+           .Where(dc => selectedCourses.Any(sc => sc.IDCRS == dc.course.IDCRS))
+           .Include(dc => dc.Instructors)
+           .Include(dc => dc.course)
+           .ToList();
+
+            ViewBag.availableSections = availableSections;
+            ViewBag.selectedCourses = selectedCourses;
+
+
+            return View();
+        }
+        [HttpPost]
+        public IActionResult ChooseInstructors(List<int> selectedInstructorsID)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View();
+            }
+
+            selectedInstructors = availableSections.Where(c => selectedInstructorsID.Contains(c.Instructors.IdInstructor))
+                .Select(c => c.Instructors)
+                .ToList();
+            ViewBag.selectedInstructors = selectedInstructors;
+
             return View();
         }
 
