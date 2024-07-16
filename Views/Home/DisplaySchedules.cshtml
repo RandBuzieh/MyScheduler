@@ -1,0 +1,93 @@
+﻿@model Scheduler.Models.Section
+
+
+
+@{
+    Layout = null;
+    List<List<Section>> possibleSchedules = ViewData["possibleSchedules"] as List<List<Section>>;
+}
+@* 
+
+<style>
+    .small-title {
+        color: #5AA9E6;
+        font-size: 1.5em;
+        height: var(--small-title-height);
+    }
+
+
+    .product-links {
+        text-align: right;
+    }
+
+        .product-links i {
+            display: inline-block;
+            margin-left: 4px;
+            color: #484f53;
+            transition: 0.3s;
+            font-size: 1.2em;
+        }
+
+            .product-links i:hover {
+                color: #5AA9E6;
+            }
+</style>
+
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> *@
+
+
+@if (possibleSchedules.Count() != 0)
+{
+    int number = 0;
+    foreach (var secti in possibleSchedules)
+    {
+        number++;
+        <div class="card mb-3">
+            <div class="card-header small-title ">
+                <h2 class="card-title">Schedule @number</h2>
+            </div>
+
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th class="text-center">Course</th>
+                                <th class="text-center">Section</th>
+                                <th class="text-center">Hall</th>
+                                <th class="text-center">Teacher Name</th>
+                                <th class="text-center">Sun</th>
+                                <th class="text-center">Mon</th>
+                                <th class="text-center">Tues</th>
+                                <th class="text-center">Wed</th>
+                                <th class="text-center">Thu</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var sec in secti)
+                            {
+                                <tr class="sem-20232">
+                                    <td class="text-center">@sec.course?.CRS_A_NAME</td>
+                                    <td class="text-center">@sec.SectionNumber</td>
+                                    <td class="text-center">@sec.Hall</td>
+                                    <td class="text-center">@sec?.Instructors?.Name</td>
+                                    <td class="text-center">@sec.Start_Sunday?.ToString("HH:mm")</td>
+                                    <td class="text-center">@sec.Start_Monday?.ToString("HH:mm")</td>
+                                    <td class="text-center">@sec.Start_Tuesday?.ToString("HH:mm")</td>
+                                    <td class="text-center">@sec.Start_Wednesday?.ToString("HH:mm")</td>
+                                    <td class="text-center">@sec?.Start_Thursday?.ToString("HH:mm")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+           
+
+        </div>
+    }
+}

@@ -203,40 +203,163 @@ namespace Scheduler.Controllers
             }
 
              selectedCourses = studyPlanCourses.Where(c => selectedCourseIds.Contains(c.IDCRS)).ToList();
-           
-
-            return View("ChooseInstructors");
+            
+            return Redirect("DisplaySchedules");
         }
-        [HttpGet]
-        public async Task<IActionResult> ChooseInstructors()
+        //[HttpGet]
+        //public async Task<IActionResult> ChooseInstructors()
+        //{
+        //    availableSections = _context.Sections
+        //        .Where(dc => selectedCourses.Contains(dc.course))
+        //        .Include(dc => dc.Instructors)
+        //        .Include(dc => dc.course)
+        //        .ToList();
+
+        //    ViewBag.availableSections = availableSections;
+        //    ViewBag.selectedCourses = selectedCourses;
+
+
+
+
+        //    return View();
+        //}
+        //[HttpPost]
+        //public IActionResult ChooseInstructors(List<int> selectedInstructorsID)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return View();
+        //    }
+
+        //    selectedInstructors = availableSections.Where(c => selectedInstructorsID.Contains(c.Instructors.IdInstructor))
+        //        .Select(c => c.Instructors)
+        //        .ToList();
+        //    ViewBag.selectedInstructors = selectedInstructors;
+
+        //    return View();
+        //}
+
+        public async Task MakeScheduler()
         {
-            availableSections = _context.Sections
-           .Where(dc => selectedCourses.Any(sc => sc.IDCRS == dc.course.IDCRS))
-           .Include(dc => dc.Instructors)
-           .Include(dc => dc.course)
-           .ToList();
-
-            ViewBag.availableSections = availableSections;
-            ViewBag.selectedCourses = selectedCourses;
-
-
-            return View();
+            ready = false;
+            possibleSchedules = GenerateSchedules(selectedCourses);
+            if (possibleSchedules.Count() != 0)
+            { ready = true; }
+            else
+            { ready = false; }
         }
-        [HttpPost]
-        public IActionResult ChooseInstructors(List<int> selectedInstructorsID)
+
+        public List<List<Section>> GenerateSchedules([FromBody] List<Course> courses)
         {
-            if (!ModelState.IsValid)
+            var sectionsByCourse = new Dictionary<int, List<Section>>();
+
+            // Retrieve all sections for each course
+            foreach (var course in courses)
             {
-                return View();
+                var sections = _context.Sections.Include(s => s.Instructors).Include(s => s.course)
+                                       .Where(s => s.course.IDCRS == course.IDCRS && s.Status == "open")
+                                       .ToList();
+                sectionsByCourse[course.IDCRS] = sections;
             }
 
-            selectedInstructors = availableSections.Where(c => selectedInstructorsID.Contains(c.Instructors.IdInstructor))
-                .Select(c => c.Instructors)
-                .ToList();
-            ViewBag.selectedInstructors = selectedInstructors;
+            // Generate all possible schedules
+            var allSchedules = GenerateAllSchedules(sectionsByCourse);
+
+            // Return the schedules
+            return allSchedules;
+        }
+
+        private List<List<Section>> GenerateAllSchedules(Dictionary<int, List<Section>> sectionsByCourse)
+        {
+            var allSchedules = new List<List<Section>>();
+
+            // Get all possible combinations of sections
+            var sectionCombinations = GetCombinations(sectionsByCourse.Values.ToList());
+
+            // Filter out invalid schedules with conflicting sections
+            foreach (var combination in sectionCombinations)
+            {
+                if (!HasConflict(combination))
+                {
+                    allSchedules.Add(combination);
+                }
+            }
+
+            return allSchedules;
+        }
+
+        private List<List<Section>> GetCombinations(List<List<Section>> lists)
+        {
+            var result = new List<List<Section>>();
+
+            if (lists.Count == 0)
+                return result;
+
+            if (lists.Count == 1)
+            {
+                foreach (var item in lists[0])
+                {
+                    result.Add(new List<Section> { item });
+                }
+                return result;
+            }
+
+            var firstList = lists[0];
+            var restCombinations = GetCombinations(lists.Skip(1).ToList());
+
+            foreach (var item in firstList)
+            {
+                foreach (var combination in restCombinations)
+                {
+                    var newList = new List<Section> { item };
+                    newList.AddRange(combination);
+                    result.Add(newList);
+                }
+            }
+
+            return result;
+        }
+
+        private bool HasConflict(List<Section> sections)
+        {
+            foreach (var section1 in sections)
+            {
+                foreach (var section2 in sections)
+                {
+                    if (section1 != section2 && AreSectionsConflicting(section1, section2))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private bool AreSectionsConflicting(Section section1, Section section2)
+        {
+            // Check conflicts for each day
+            return IsTimeOverlap(section1.Start_Sunday, section1.End_Sunday, section2.Start_Sunday, section2.End_Sunday) ||
+                   IsTimeOverlap(section1.Start_Monday, section1.End_Monday, section2.Start_Monday, section2.End_Monday) ||
+                   IsTimeOverlap(section1.Start_Tuesday, section1.End_Tuesday, section2.Start_Tuesday, section2.End_Tuesday) ||
+                   IsTimeOverlap(section1.Start_Wednesday, section1.End_Wednesday, section2.Start_Wednesday, section2.End_Wednesday) ||
+                   IsTimeOverlap(section1.Start_Thursday, section1.End_Thursday, section2.Start_Thursday, section2.End_Thursday);
+        }
+
+        private bool IsTimeOverlap(DateTime? start1, DateTime? end1, DateTime? start2, DateTime? end2)
+        {
+            if (start1 == null || end1 == null || start2 == null || end2 == null)
+                return false;
+
+            return start1 < end2 && start2 < end1;
+        }
+
+        public async Task<IActionResult> DisplaySchedules()
+        {
+            MakeScheduler();
+
+            ViewData["possibleSchedules"] = possibleSchedules;
 
             return View();
         }
-
     }
 }
