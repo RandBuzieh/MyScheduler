@@ -1,0 +1,15 @@
+﻿@{
+    List<Section> selectedSections = ViewBag.selectedSections as List<Section>;
+
+}
+@if (selectedSections != null && selectedSections.Count() > 0)
+{
+    @foreach (var s in selectedSections)
+    {
+        <h3>@s.course.CRS_A_NAME</h3>
+        <h3>@s.Instructors.Name</h3>
+        <h3>@s.IDSection</h3>
+        <br />
+    }
+
+}

@@ -1,0 +1,28 @@
+﻿
+@{
+    List<Course> selectedCourses = ViewBag.selectedCourses as List<Course>;
+    List<Section> availableSections = ViewBag.availableSections as List<Section>;
+    List<Section> selectedSections = ViewBag.selectedSections as List<Section>;
+
+}
+
+<h1>Select Instructors to Exclude</h1>
+
+<form asp-controller="Home" asp-action="ChooseInstructors" method="post">
+    @foreach (var c in selectedCourses)
+    {
+        <h2>For @c.CRS_A_NAME :</h2>
+        @foreach (var a in availableSections)
+        {
+            if(c.IDCRS == a.course.IDCRS)
+            {
+                <div>
+                    <input type="checkbox" name="selectedSectionsIds" value="@a.IDSection">
+                    <label>@a.Instructors.Name</label>
+                </div>
+            }
+        }
+        
+    }
+    <button type="submit">Submit</button>
+</form>
