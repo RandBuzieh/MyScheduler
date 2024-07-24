@@ -23,9 +23,11 @@ namespace Scheduler.Controllers
 
         public static List<Course> selectedCourses = new List<Course>();
         public static List<Section> selectedSections = new List<Section>();
+        public static List<Instructor> preferredInstructors = new List<Instructor>();
 
         public static List<List<Section>> possibleSchedules = new List<List<Section>>();
         private readonly ILogger<HomeController> _logger;
+        Dictionary<int, List<Section>> sectionsByCourse= new Dictionary<int, List<Section>>();
 
         public HomeController(DBContextSystem context)
         {
@@ -74,10 +76,12 @@ namespace Scheduler.Controllers
 
         public async Task CalculateYearAndSemester()
         {
+
             double totalCompletedCreditHours = _context.StudentsProgress
                 .Where(p => p.Student.KeyStudent == student.KeyStudent)
                 .Join(_context.Courses, p => p.course.IDCRS, c => c.IDCRS, (p, c) => c.CRS_CR_HOURS)
                 .Sum();
+
 
             int totalCreditHours = 132;
             int semesters = 8;
@@ -105,6 +109,7 @@ namespace Scheduler.Controllers
                     }
                     year = 132;
                     semester = 132;
+
                 }
             }
             else if (year == 0)
@@ -124,10 +129,12 @@ namespace Scheduler.Controllers
                     semester = 2;
                 }
             }
-        }
 
+            return;
+        }
         public List<int> FinishedCourses()
         {
+            // Fetch completed course IDs for the student
             var completedCourseIds = _context.StudentsProgress
                 .Where(p => p.Student.KeyStudent == student.KeyStudent)
                 .Select(p => p.course.IDCRS)
@@ -135,9 +142,10 @@ namespace Scheduler.Controllers
 
             return completedCourseIds;
         }
-
         public async Task GetAvailableCoursesAsync()
         {
+
+
             var completedCourseIds = FinishedCourses();
 
             var availableCourses = _context.DegreeProgresContents
@@ -146,6 +154,8 @@ namespace Scheduler.Controllers
                 .Distinct()
                 .ToList();
 
+
+            // Remove courses that need a prerequisite
             var coursesStudentCanTake = new List<Course>();
             foreach (var course in availableCourses)
             {
@@ -166,12 +176,15 @@ namespace Scheduler.Controllers
                 .Select(s => s.studyPlan.IdStudyPlan)
                 .FirstOrDefault();
 
+            // Fetch courses from the student's study plan
             studyPlanCourses = _context.PlanContents
                 .Where(pc => pc.StudyPlan.IdStudyPlan == studyPlanId)
                 .Where(pc => coursesStudentCanTake.Contains(pc.course))
                 .Select(pc => pc.course)
                 .Distinct()
                 .ToList();
+
+
         }
 
         [HttpGet]
@@ -180,10 +193,9 @@ namespace Scheduler.Controllers
             await CalculateYearAndSemester();
             await GetAvailableCoursesAsync();
             ViewBag.studyPlanCourses = studyPlanCourses;
-            
+
             return View();
         }
-
         [HttpPost]
         public IActionResult ViewCourses(List<int> selectedCourseIds)
         {
@@ -192,90 +204,87 @@ namespace Scheduler.Controllers
                 return View();
             }
 
-             selectedCourses = studyPlanCourses.Where(c => selectedCourseIds.Contains(c.IDCRS)).ToList();
-            
-            return Redirect("DisplaySchedules");
-        }
+            selectedCourses = studyPlanCourses.Where(c => selectedCourseIds.Contains(c.IDCRS)).ToList();
 
+            return Redirect("ChooseInstructors");
+        }
         [HttpGet]
         public async Task<IActionResult> ChooseInstructors()
         {
-            availableSections = _context.Sections
+             availableSections = _context.Sections
                 .Where(dc => selectedCourses.Contains(dc.course))
                 .Include(dc => dc.Instructors)
                 .Include(dc => dc.course)
                 .ToList();
+
+            foreach (var course in selectedCourses)
+            {
+                List<Section> courseSections = new List<Section>();
+                availableSections = _context.Sections
+                .Where(dc => course.IDCRS==dc.course.IDCRS)
+                .Include(dc => dc.Instructors)
+                .Include(dc => dc.course)
+                .ToList();
+                    sectionsByCourse.Add(course.IDCRS,courseSections);
+            }
+
             ViewBag.selectedCourses = selectedCourses;
             ViewBag.availableSections = availableSections;
-            ViewBag.selectedCourses = selectedCourses;
+
             return View();
         }
 
+
         [HttpPost]
-        public IActionResult ChooseInstructors(List<int> selectedSectionsIds)
+        public IActionResult ChooseInstructors(List<int> selectedIdInstructor)
         {
             if (!ModelState.IsValid)
             {
                 return View();
             }
-            selectedSections = _context.Sections
-                .Where(dc => selectedSectionsIds.Contains(dc.IDSection))
-                .Include(dc => dc.Instructors)
-                .Include(dc => dc.course)
-                .ToList();
-
-            ViewBag.selectedSections = selectedSections;
-
-            return Redirect("ChooseInstructorsView");
-        }
-
-        public IActionResult ChooseInstructorsView()
-        {
-            ViewBag.selectedSections = selectedSections;
-
-            return View();
+            preferredInstructors = _context.Instructors.Where(i => selectedIdInstructor.
+            Contains(i.IdInstructor)).Distinct().ToList();
+            return Redirect("DisplaySchedules");
         }
 
         public async Task MakeScheduler()
         {
             ready = false;
-            possibleSchedules = GenerateAllSchedules(selectedCourses, preferredInstructors: new List<Instructor>());
+            possibleSchedules = GenerateAllSchedules(sectionsByCourse, preferredInstructors);
             if (possibleSchedules.Count() != 0)
-            {
-                ready = true;
-            }
+            { ready = true; }
             else
-            {
-                ready = false;
-            }
+            { ready = false; }
         }
 
-        public List<List<Section>> GenerateAllSchedules(List<Course> selectedCourses, List<Instructor> preferredInstructors, double preferenceThreshold = 0.8)
+        public List<List<Section>> GenerateAllSchedules(Dictionary<int, List<Section>> sectionsByCourse, List<Instructor> preferredInstructors, double preferenceThreshold = 0.8)
         {
-            var sectionsByCourse = selectedCourses.ToDictionary(
-                c => c.IDCRS,
-                c => _context.Sections.Where(s => s.course.IDCRS == c.IDCRS).ToList()
-            );
-
             var populationSize = 100;
             var generations = 50;
             var mutationRate = 0.01;
 
+            // Initialize population
             var population = InitializePopulation(sectionsByCourse, populationSize);
 
             for (int generation = 0; generation < generations; generation++)
             {
+                // Evaluate fitness
                 var fitnessScores = EvaluateFitness(population, sectionsByCourse, preferredInstructors);
 
+                // Selection
                 var selectedSchedules = SelectSchedules(population, fitnessScores);
 
+                // Crossover
                 var offspring = Crossover(selectedSchedules);
 
+                // Mutation
                 Mutate(offspring, mutationRate, sectionsByCourse);
 
+                // Create new population
                 population = new List<List<Section>>(offspring);
             }
 
+            // Return the best schedules meeting the preference threshold
             return population.Where(s => CalculatePreferenceMatch(s, preferredInstructors) >= preferenceThreshold).ToList();
         }
 
@@ -308,13 +317,15 @@ namespace Scheduler.Controllers
             {
                 double fitness = 0;
 
+                // Check for conflicts and completeness
                 if (!HasConflict(schedule) && IncludesAllSelectedCourses(schedule, sectionsByCourse))
                 {
-                    fitness = 1;
-                    fitness += schedule.Count;
+                    fitness = 1; // Assign a base fitness score for valid schedules
+                    fitness += schedule.Count; // Optionally, reward schedules with more courses
 
+                    // Calculate preference match percentage
                     double preferenceMatch = CalculatePreferenceMatch(schedule, preferredInstructors);
-                    fitness += preferenceMatch;
+                    fitness += preferenceMatch; // Reward schedules that match preferences
                 }
 
                 fitnessScores.Add(fitness);
@@ -344,6 +355,7 @@ namespace Scheduler.Controllers
             var selectedSchedules = new List<List<Section>>();
             var random = new Random();
 
+            // Example selection method: roulette wheel selection
             double totalFitness = fitnessScores.Sum();
 
             for (int i = 0; i < population.Count / 2; i++)
@@ -447,9 +459,10 @@ namespace Scheduler.Controllers
             return start1 < end2 && start2 < end1;
         }
 
+
         public async Task<IActionResult> DisplaySchedules()
         {
-            await MakeScheduler();
+            MakeScheduler();
 
             ViewData["possibleSchedules"] = possibleSchedules;
 
