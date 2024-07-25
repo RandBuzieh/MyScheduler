@@ -23,7 +23,7 @@ namespace Scheduler.Controllers
 
         public static List<Course> selectedCourses = new List<Course>();
         public static List<Section> selectedSections = new List<Section>();
-        public static List<Instructor> preferredInstructors = new List<Instructor>();
+        public static List<int> preferredInstructors = new List<int>();
 
         public static List<List<Section>> possibleSchedules = new List<List<Section>>();
         private readonly ILogger<HomeController> _logger;
@@ -217,23 +217,13 @@ namespace Scheduler.Controllers
                 .Include(dc => dc.course)
                 .ToList();
 
-            foreach (var course in selectedCourses)
-            {
-                List<Section> courseSections = new List<Section>();
-                availableSections = _context.Sections
-                .Where(dc => course.IDCRS==dc.course.IDCRS)
-                .Include(dc => dc.Instructors)
-                .Include(dc => dc.course)
-                .ToList();
-                    sectionsByCourse.Add(course.IDCRS,courseSections);
-            }
+
 
             ViewBag.selectedCourses = selectedCourses;
             ViewBag.availableSections = availableSections;
 
             return View();
         }
-
 
         [HttpPost]
         public IActionResult ChooseInstructors(List<int> selectedIdInstructor)
@@ -242,13 +232,24 @@ namespace Scheduler.Controllers
             {
                 return View();
             }
-            preferredInstructors = _context.Instructors.Where(i => selectedIdInstructor.
-            Contains(i.IdInstructor)).Distinct().ToList();
+            //preferredInstructors = _context.Instructors.Where(i => selectedIdInstructor.
+            //Contains(i.IdInstructor)).Distinct().ToList();
+            preferredInstructors = selectedIdInstructor;
             return Redirect("DisplaySchedules");
         }
 
         public async Task MakeScheduler()
         {
+            foreach (var course in selectedCourses)
+            {
+                List<Section> courseSections = new List<Section>();
+                var Sections = _context.Sections
+                .Where(dc => course.IDCRS == dc.course.IDCRS)
+                .Include(dc => dc.Instructors)
+                .Include(dc => dc.course)
+                .ToList();
+                sectionsByCourse.Add(course.IDCRS, Sections);
+            }
             ready = false;
             possibleSchedules = GenerateAllSchedules(sectionsByCourse, preferredInstructors);
             if (possibleSchedules.Count() != 0)
@@ -257,10 +258,10 @@ namespace Scheduler.Controllers
             { ready = false; }
         }
 
-        public List<List<Section>> GenerateAllSchedules(Dictionary<int, List<Section>> sectionsByCourse, List<Instructor> preferredInstructors, double preferenceThreshold = 0.8)
+        public List<List<Section>> GenerateAllSchedules(Dictionary<int, List<Section>> sectionsByCourse, List<int> preferredInstructors, double preferenceThreshold = 0.8)
         {
-            var populationSize = 100;
-            var generations = 50;
+            var populationSize = 50;
+            var generations = 1;
             var mutationRate = 0.01;
 
             // Initialize population
@@ -309,7 +310,7 @@ namespace Scheduler.Controllers
             return population;
         }
 
-        private List<double> EvaluateFitness(List<List<Section>> population, Dictionary<int, List<Section>> sectionsByCourse, List<Instructor> preferredInstructors)
+        private List<double> EvaluateFitness(List<List<Section>> population, Dictionary<int, List<Section>> sectionsByCourse, List<int> preferredInstructors)
         {
             var fitnessScores = new List<double>();
 
@@ -342,13 +343,21 @@ namespace Scheduler.Controllers
             return allCourseIds.SetEquals(courseIdsInSchedule);
         }
 
-        private double CalculatePreferenceMatch(List<Section> schedule, List<Instructor> preferredInstructors)
+        private double CalculatePreferenceMatch(List<Section> schedule, List<int> preferredInstructors)
         {
             int totalInstructors = schedule.Select(s => s.Instructors).Distinct().Count();
-            int preferredCount = schedule.Select(s => s.Instructors).Count(i => preferredInstructors.Contains(i));
+            int preferredCount = 0;
+            foreach (var section in schedule)
+            {
+                if(preferredInstructors.Contains(section.Instructors.IdInstructor))
+                {
+                    preferredCount++;
+                }
+            }
 
-            return (double)preferredCount / totalInstructors;
+            return totalInstructors > 0 ? (double)preferredCount / totalInstructors : 0;
         }
+
 
         private List<List<Section>> SelectSchedules(List<List<Section>> population, List<double> fitnessScores)
         {
@@ -458,7 +467,6 @@ namespace Scheduler.Controllers
 
             return start1 < end2 && start2 < end1;
         }
-
 
         public async Task<IActionResult> DisplaySchedules()
         {
