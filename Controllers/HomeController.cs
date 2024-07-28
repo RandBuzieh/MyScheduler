@@ -25,7 +25,9 @@ namespace Scheduler.Controllers
         public static List<Section> selectedSections = new List<Section>();
         public static List<int> preferredInstructors = new List<int>();
 
-        public static List<List<Section>> possibleSchedules = new List<List<Section>>();
+        public static HashSet<List<Section>> possibleSchedules = new HashSet<List<Section>>();
+        public static HashSet<List<Section>> filteredPossibleSchedules = new HashSet<List<Section>>();
+
         private readonly ILogger<HomeController> _logger;
         Dictionary<int, List<Section>> sectionsByCourse= new Dictionary<int, List<Section>>();
 
@@ -258,7 +260,7 @@ namespace Scheduler.Controllers
             { ready = false; }
         }
 
-        public List<List<Section>> GenerateAllSchedules(Dictionary<int, List<Section>> sectionsByCourse, List<int> preferredInstructors, double preferenceThreshold = 0.8)
+        public HashSet<List<Section>> GenerateAllSchedules(Dictionary<int, List<Section>> sectionsByCourse, List<int> preferredInstructors, double preferenceThreshold = 0.8)
         {
             var populationSize = 50;
             var generations = 1;
@@ -286,7 +288,7 @@ namespace Scheduler.Controllers
             }
 
             // Return the best schedules meeting the preference threshold
-            return population.Where(s => CalculatePreferenceMatch(s, preferredInstructors) >= preferenceThreshold).ToList();
+            return population.Where(s => CalculatePreferenceMatch(s, preferredInstructors) >= preferenceThreshold).ToHashSet();
         }
 
         private List<List<Section>> InitializePopulation(Dictionary<int, List<Section>> sectionsByCourse, int populationSize)
@@ -357,7 +359,6 @@ namespace Scheduler.Controllers
 
             return totalInstructors > 0 ? (double)preferredCount / totalInstructors : 0;
         }
-
 
         private List<List<Section>> SelectSchedules(List<List<Section>> population, List<double> fitnessScores)
         {
