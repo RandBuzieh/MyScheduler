@@ -1,0 +1,15 @@
+﻿@{
+    Dictionary<string, bool> preferredDays = ViewBag.preferredDays as Dictionary<string, bool>;
+}
+<h1>Select preferred Days</h1>
+
+<form asp-controller="Home" asp-action="ChooseDays" method="post">
+    @foreach (var day in preferredDays.Keys)
+    {
+                <div>
+                    <input type="checkbox" name="selectedDays" value="@day">
+                    <label>@day</label>
+                </div>   
+    }
+    <button type="submit">Submit</button>
+</form>

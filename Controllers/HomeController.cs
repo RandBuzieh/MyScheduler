@@ -27,6 +27,7 @@ namespace Scheduler.Controllers
 
         public List<List<Section>> possibleSchedules = new List<List<Section>>();
         public List<List<Section>> filteredPossibleSchedules = new List<List<Section>>();
+        public static Dictionary<string, bool> preferredDays ;
 
         private readonly ILogger<HomeController> _logger;
         Dictionary<int, List<Section>> sectionsByCourse= new Dictionary<int, List<Section>>();
@@ -218,9 +219,6 @@ namespace Scheduler.Controllers
                 .Include(dc => dc.Instructors)
                 .Include(dc => dc.course)
                 .ToList();
-
-
-
             ViewBag.selectedCourses = selectedCourses;
             ViewBag.availableSections = availableSections;
 
@@ -235,9 +233,28 @@ namespace Scheduler.Controllers
                 return View();
             }
             preferredInstructors = selectedIdInstructor;
-            return Redirect("DisplaySchedules");
+            return Redirect("ChooseDays");
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ChooseDays()
+        {
+            preferredDays = new Dictionary<string, bool>{
+            { "Sunday - Tuesday - Thursday", false },
+            { "Monday - Wednesday", false },
+            };
+            ViewBag.preferredDays = preferredDays;
+            return View(); 
+        }
+        [HttpPost]
+        public IActionResult ChooseDays (List<string> selectedDays)
+        {
+            foreach (string day in selectedDays)
+            {
+                preferredDays[day] = true;
+            }
+            return Redirect("DisplaySchedules");
+        }
         public async Task MakeScheduler()
         {
             foreach (var course in selectedCourses)
@@ -490,7 +507,6 @@ namespace Scheduler.Controllers
         {
             MakeScheduler();
             ViewData["possibleSchedules"] = CheckForRepetition(possibleSchedules);
-
             return View();
         }
     }
