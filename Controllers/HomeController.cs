@@ -25,8 +25,8 @@ namespace Scheduler.Controllers
         public static List<Section> selectedSections = new List<Section>();
         public static List<int> preferredInstructors = new List<int>();
 
-        public static HashSet<List<Section>> possibleSchedules = new HashSet<List<Section>>();
-        public static HashSet<List<Section>> filteredPossibleSchedules = new HashSet<List<Section>>();
+        public List<List<Section>> possibleSchedules = new List<List<Section>>();
+        public List<List<Section>> filteredPossibleSchedules = new List<List<Section>>();
 
         private readonly ILogger<HomeController> _logger;
         Dictionary<int, List<Section>> sectionsByCourse= new Dictionary<int, List<Section>>();
@@ -234,8 +234,6 @@ namespace Scheduler.Controllers
             {
                 return View();
             }
-            //preferredInstructors = _context.Instructors.Where(i => selectedIdInstructor.
-            //Contains(i.IdInstructor)).Distinct().ToList();
             preferredInstructors = selectedIdInstructor;
             return Redirect("DisplaySchedules");
         }
@@ -260,7 +258,7 @@ namespace Scheduler.Controllers
             { ready = false; }
         }
 
-        public HashSet<List<Section>> GenerateAllSchedules(Dictionary<int, List<Section>> sectionsByCourse, List<int> preferredInstructors, double preferenceThreshold = 0.8)
+        public List<List<Section>> GenerateAllSchedules(Dictionary<int, List<Section>> sectionsByCourse, List<int> preferredInstructors, double preferenceThreshold = 0.8)
         {
             var populationSize = 50;
             var generations = 1;
@@ -288,28 +286,26 @@ namespace Scheduler.Controllers
             }
 
             // Return the best schedules meeting the preference threshold
-            return population.Where(s => CalculatePreferenceMatch(s, preferredInstructors) >= preferenceThreshold).ToHashSet();
+            return population.Where(s => CalculatePreferenceMatch(s, preferredInstructors) >= preferenceThreshold).ToList();
         }
 
         private List<List<Section>> InitializePopulation(Dictionary<int, List<Section>> sectionsByCourse, int populationSize)
         {
             var population = new List<List<Section>>();
             var random = new Random();
-
             for (int i = 0; i < populationSize; i++)
             {
                 var schedule = new List<Section>();
-
                 foreach (var courseSections in sectionsByCourse.Values)
                 {
-                    var section = courseSections[random.Next(courseSections.Count)];
+                    Section section = courseSections[random.Next(courseSections.Count)];
                     schedule.Add(section);
                 }
 
                 population.Add(schedule);
             }
-
-            return population;
+            return CheckForRepetition(population);
+;
         }
 
         private List<double> EvaluateFitness(List<List<Section>> population, Dictionary<int, List<Section>> sectionsByCourse, List<int> preferredInstructors)
@@ -357,7 +353,7 @@ namespace Scheduler.Controllers
                 }
             }
 
-            return totalInstructors > 0 ? (double)preferredCount / totalInstructors : 0;
+            return totalInstructors > 0 ? (double)preferredCount / totalInstructors : 0;      
         }
 
         private List<List<Section>> SelectSchedules(List<List<Section>> population, List<double> fitnessScores)
@@ -469,11 +465,31 @@ namespace Scheduler.Controllers
             return start1 < end2 && start2 < end1;
         }
 
+        public List<List<Section>> CheckForRepetition(List<List<Section>> possibleSchedules)
+        {
+            List<string> populationSchedule = new List<string>();
+
+            foreach (var schedule in possibleSchedules)
+            {
+                string check = "";
+
+                foreach (var section in schedule)
+                {
+                    check += section.IDSection;
+                }
+                if (!populationSchedule.Contains(check))
+                {
+                    populationSchedule.Add(check);
+                    filteredPossibleSchedules.Add(schedule);
+                }
+            }
+            return filteredPossibleSchedules;
+        }
+
         public async Task<IActionResult> DisplaySchedules()
         {
             MakeScheduler();
-
-            ViewData["possibleSchedules"] = possibleSchedules;
+            ViewData["possibleSchedules"] = CheckForRepetition(possibleSchedules);
 
             return View();
         }
