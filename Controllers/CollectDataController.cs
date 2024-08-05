@@ -2,53 +2,35 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Scheduler.Data;
 using Scheduler.Models;
+using Scheduler.Repositary;
+
 using System.Diagnostics;
 using System.Linq;
 
 namespace Scheduler.Controllers
 {
-    public class HomeController : Controller
+    public class CollectDataController : Controller
     {
-        private readonly DBContextSystem _context;
-        public static Student? student;
-        public List<Section> Sections { get; set; }
-        public static int totalCreditHours;
-        public static int semester;
-        public static int year;
-        public static bool ready;
 
+        public List<Section> Sections { get; set; }
+        public static bool ready;
         public static List<int> completedCourseIds;
         public static List<Course> studyPlanCourses = new List<Course>();
         public static List<Section> availableSections = new List<Section>();
-
         public static List<Course> selectedCourses = new List<Course>();
         public static List<Section> selectedSections = new List<Section>();
         public static List<int> preferredInstructors = new List<int>();
-
         public List<List<Section>> possibleSchedules = new List<List<Section>>();
         public List<List<Section>> filteredPossibleSchedules = new List<List<Section>>();
         public static Dictionary<string, bool> preferredDays ;
-
-        private readonly ILogger<HomeController> _logger;
         Dictionary<int, List<Section>> sectionsByCourse= new Dictionary<int, List<Section>>();
 
-        public HomeController(DBContextSystem context)
+        private StudentInfo _studentInfo;
+        private readonly DBContextSystem _context;
+        private static Student? _student;
+        public CollectDataController(DBContextSystem context)
         {
             _context = context;
-        }
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
         [HttpGet]
         public IActionResult Login()
@@ -61,15 +43,11 @@ namespace Scheduler.Controllers
         {
             if (ModelState.IsValid)
             {
-                student = _context.Students.FirstOrDefault(u => u.Email.Equals(userLogin.Email) && u.password.Equals(userLogin.password));
+                _student = _context.Students.FirstOrDefault(u => u.Email.Equals(userLogin.Email) && u.password.Equals(userLogin.password));
 
-                if (student != null)
+                if (_student != null)
                 {
-                    char firstCher = student.Name.FirstOrDefault();
-                    TempData["MasgName"] = $"{firstCher}";
-                    TempData.Keep("MasgName");
-
-                    return RedirectToAction("ViewCourses", "Home");
+                    return RedirectToAction("ViewCourses");
                 }
                 TempData["Msg"] = "Invalid email or password";
             }
@@ -77,126 +55,11 @@ namespace Scheduler.Controllers
 
         }
 
-        public async Task CalculateYearAndSemester()
-        {
-
-            double totalCompletedCreditHours = _context.StudentsProgress
-                .Where(p => p.Student.KeyStudent == student.KeyStudent)
-                .Join(_context.Courses, p => p.course.IDCRS, c => c.IDCRS, (p, c) => c.CRS_CR_HOURS)
-                .Sum();
-
-
-            int totalCreditHours = 132;
-            int semesters = 8;
-            double creditHoursPerSemester = totalCreditHours / (double)semesters;
-
-            int currentSemester = (int)Math.Ceiling(totalCompletedCreditHours / creditHoursPerSemester);
-            year = (currentSemester + 1) / 2;
-            semester = (currentSemester % 2 == 0) ? 2 : 1;
-
-            if (year == 4 && semester == 2)
-            {
-                float completedTraining = _context.StudentsProgress
-                    .Where(p => p.Student.KeyStudent == student.KeyStudent && p.course.IDCRS == 51)
-                    .Select(p => p.Mark)
-                    .FirstOrDefault();
-
-                int hours = FinishedCourses().Count();
-                if (hours == 132)
-                {
-                    if (completedTraining >= 50.0f)
-                    {
-                        year = 131;
-                        semester = 131;
-
-                    }
-                    year = 132;
-                    semester = 132;
-
-                }
-            }
-            else if (year == 0)
-            {
-                year = 1;
-                semester = 1;
-            }
-            else
-            {
-                if (semester == 2)
-                {
-                    year++;
-                    semester = 1;
-                }
-                else
-                {
-                    semester = 2;
-                }
-            }
-
-            return;
-        }
-        public List<int> FinishedCourses()
-        {
-            // Fetch completed course IDs for the student
-            var completedCourseIds = _context.StudentsProgress
-                .Where(p => p.Student.KeyStudent == student.KeyStudent)
-                .Select(p => p.course.IDCRS)
-                .ToList();
-
-            return completedCourseIds;
-        }
-        public async Task GetAvailableCoursesAsync()
-        {
-
-
-            var completedCourseIds = FinishedCourses();
-
-            var availableCourses = _context.DegreeProgresContents
-                .Where(dc => !completedCourseIds.Contains(dc.course.IDCRS))
-                .Select(dc => dc.course)
-                .Distinct()
-                .ToList();
-
-
-            // Remove courses that need a prerequisite
-            var coursesStudentCanTake = new List<Course>();
-            foreach (var course in availableCourses)
-            {
-                var prerequisiteIds = _context.PlanContents
-                    .Where(pc => pc.course.IDCRS == course.IDCRS)
-                    .Where(pc => pc.prerequisite != 0)
-                    .Select(pc => pc.prerequisite)
-                    .ToList();
-
-                if (!prerequisiteIds.Any() || prerequisiteIds.All(prerequisite => completedCourseIds.Contains((int)prerequisite)))
-                {
-                    coursesStudentCanTake.Add(course);
-                }
-            }
-
-            var studyPlanId = _context.Students
-                .Where(s => s.KeyStudent == student.KeyStudent)
-                .Select(s => s.studyPlan.IdStudyPlan)
-                .FirstOrDefault();
-
-            // Fetch courses from the student's study plan
-            studyPlanCourses = _context.PlanContents
-                .Where(pc => pc.StudyPlan.IdStudyPlan == studyPlanId)
-                .Where(pc => coursesStudentCanTake.Contains(pc.course))
-                .Select(pc => pc.course)
-                .Distinct()
-                .ToList();
-
-
-        }
-
         [HttpGet]
         public async Task<IActionResult> ViewCourses()
         {
-            await CalculateYearAndSemester();
-            await GetAvailableCoursesAsync();
-            ViewBag.studyPlanCourses = studyPlanCourses;
-
+            var _studentInfo = new StudentInfo();
+            ViewBag.studyPlanCourses = _studentInfo.GetAvailableCoursesAsync(_student, _context);
             return View();
         }
         [HttpPost]
@@ -275,7 +138,7 @@ namespace Scheduler.Controllers
             { ready = false; }
         }
 
-        public List<List<Section>> GenerateAllSchedules(Dictionary<int, List<Section>> sectionsByCourse, List<int> preferredInstructors, double preferenceThreshold = 0.8)
+        public List<List<Section>> GenerateAllSchedules(Dictionary<int, List<Section>> sectionsByCourse, List<int> preferredInstructors, double preferenceThreshold = 1)
         {
             var populationSize = 50;
             var generations = 1;
@@ -365,6 +228,14 @@ namespace Scheduler.Controllers
             foreach (var section in schedule)
             {
                 if(preferredInstructors.Contains(section.Instructors.IdInstructor))
+                {
+                    preferredCount++;
+                }
+                if (section.Start_Sunday != null && preferredDays["Sunday - Tuesday - Thursday"])
+                {
+                    preferredCount++;
+                }
+                if (section.Start_Monday != null && preferredDays["Monday - Wednesday"])
                 {
                     preferredCount++;
                 }
