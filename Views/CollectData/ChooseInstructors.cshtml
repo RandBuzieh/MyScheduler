@@ -7,7 +7,7 @@
 
 <h1>Select Instructors</h1>
 
-<form asp-controller="Home" asp-action="ChooseInstructors" method="post">
+<form asp-controller="CollectData" asp-action="ChooseInstructors" method="post">
     @foreach (var c in selectedCourses)
     {
         <h2>For @c.CRS_A_NAME :</h2>
