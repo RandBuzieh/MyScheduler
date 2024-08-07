@@ -12,12 +12,11 @@ namespace Scheduler.Controllers
         public static bool ready;
         public static List<int> completedCourseIds;
         public static List<Section> availableSections = new List<Section>();
-        public static List<Course> selectedCourses = new List<Course>();
         public static List<Section> selectedSections = new List<Section>();
         public List<List<Section>> possibleSchedules = new List<List<Section>>();
         public List<List<Section>> filteredPossibleSchedules = new List<List<Section>>();
-        Dictionary<int, List<Section>> sectionsByCourse = new Dictionary<int, List<Section>>();
 
+        public static List<Course> selectedCourses = new List<Course>();
         public static int PreferredStartTime, PreferredEndTime;
         public static Dictionary<string, bool> preferredDays;
         public static List<Instructor> preferredInstructors = new List<Instructor>();
@@ -51,6 +50,7 @@ namespace Scheduler.Controllers
 
         }
 
+
         [HttpGet]
         public async Task<IActionResult> ViewCourses()
         {
@@ -71,6 +71,7 @@ namespace Scheduler.Controllers
 
             return Redirect("ChooseInstructors");
         }
+
         [HttpGet]
         public async Task<IActionResult> ChooseInstructors()
         {
@@ -84,7 +85,6 @@ namespace Scheduler.Controllers
 
             return View();
         }
-
         [HttpPost]
         public IActionResult ChooseInstructors(List<int> selectedIdInstructor)
         {
@@ -155,21 +155,21 @@ namespace Scheduler.Controllers
             }
             PreferredStartTime = selectedStartTime;
             PreferredEndTime = selectedEndTime;
-            return Redirect("DisplaySchedules");
+            return Redirect("SendDataToGenerate");
+        }
+        public IActionResult SendDataToGenerate()
+        {
+            ViewBag.selectedCourses = selectedCourses;
+            ViewBag.preferredInstructors = preferredInstructors;
+            ViewBag.preferredDays = preferredDays;
+            ViewBag.PreferredStartTime = PreferredStartTime;
+            ViewBag.PreferredEndTime = PreferredEndTime;
+            return RedirectToAction("Index", "GenerateSchedule");
         }
 
         //        public async Task MakeScheduler()
         //        {
-        //            foreach (var course in selectedCourses)
-        //            {
-        //                List<Section> courseSections = new List<Section>();
-        //                var Sections = _context.Sections
-        //                .Where(dc => course.IDCRS == dc.course.IDCRS)
-        //                .Include(dc => dc.Instructors)
-        //                .Include(dc => dc.course)
-        //                .ToList();
-        //                sectionsByCourse.Add(course.IDCRS, Sections);
-        //            }
+
         //            ready = false;
         //            possibleSchedules = GenerateAllSchedules(sectionsByCourse, preferredInstructors);
         //            if (possibleSchedules.Count() != 0)
@@ -180,7 +180,7 @@ namespace Scheduler.Controllers
 
         //        public List<List<Section>> GenerateAllSchedules(Dictionary<int, List<Section>> sectionsByCourse, List<int> preferredInstructors, double preferenceThreshold = 1)
         //        {
-        //            var populationSize = 50;
+        //            
         //            var generations = 1;
         //            var mutationRate = 0.01;
 
@@ -209,24 +209,7 @@ namespace Scheduler.Controllers
         //            return population.Where(s => CalculatePreferenceMatch(s, preferredInstructors) >= preferenceThreshold).ToList();
         //        }
 
-        //        private List<List<Section>> InitializePopulation(Dictionary<int, List<Section>> sectionsByCourse, int populationSize)
-        //        {
-        //            var population = new List<List<Section>>();
-        //            var random = new Random();
-        //            for (int i = 0; i < populationSize; i++)
-        //            {
-        //                var schedule = new List<Section>();
-        //                foreach (var courseSections in sectionsByCourse.Values)
-        //                {
-        //                    Section section = courseSections[random.Next(courseSections.Count)];
-        //                    schedule.Add(section);
-        //                }
 
-        //                population.Add(schedule);
-        //            }
-        //            return CheckForRepetition(population);
-        //;
-        //        }
 
         //        private List<double> EvaluateFitness(List<List<Section>> population, Dictionary<int, List<Section>> sectionsByCourse, List<int> preferredInstructors)
         //        {
