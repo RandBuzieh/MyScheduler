@@ -3,7 +3,7 @@ namespace Scheduler.Services.CalculateFitness
 {
     public interface IFitnessCheck
     {
-        public Dictionary<List<Section>, int> CalculateFitness(Dictionary<List<Section>, int> population, int PreferredStartTime, int PreferredEndTime, Dictionary<string, bool> preferredDays);
+        public Dictionary<List<Section>, int> CalculateFitness(Dictionary<List<Section>, int> population, int PreferredStartTime, int PreferredEndTime, Dictionary<string, bool> preferredDays, List<Instructor> preferredInstructors);
 
     }
 }

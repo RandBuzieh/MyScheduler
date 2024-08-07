@@ -32,6 +32,8 @@ namespace Scheduler.Controllers
             GenerateScheduleController.PreferredEndTime = PreferredEndTime;
             var population = InitializePopulation();
             population = EvaluateFitness(population);
+            ViewData["possibleSchedules"] = population;
+
             return View();
         }
         public Dictionary<List<Section>, int> InitializePopulation()
@@ -42,7 +44,7 @@ namespace Scheduler.Controllers
         }
         public Dictionary<List<Section>, int> EvaluateFitness(Dictionary<List<Section>, int> population)
         {
-            var evaluatedPopulation = _IFitnessCheck.CalculateFitness(population, PreferredStartTime, PreferredEndTime, preferredDays);
+            var evaluatedPopulation = _IFitnessCheck.CalculateFitness(population, PreferredStartTime, PreferredEndTime, preferredDays, preferredInstructors);
             return evaluatedPopulation;
         }
 

@@ -64,7 +64,7 @@ namespace Scheduler.Services.CalculateFitness
                 if (section.Start_Wednesday != null && preferredDays["Wednesday"]) score++;
                 if (section.Start_Thursday != null && preferredDays["Thursday"]) score++;
             }
-            return score * 50 / schedule.Capacity;
+            return score * 75 / schedule.Capacity;
         }
 
 

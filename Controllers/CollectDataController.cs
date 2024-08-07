@@ -159,15 +159,16 @@ namespace Scheduler.Controllers
             return Redirect("SendDataToGenerate");
         }
        public IActionResult SendDataToGenerate()
-{
+       {
     return RedirectToAction("Index", "GenerateSchedule", new 
     { 
         selectedCourses = JsonConvert.SerializeObject(selectedCourses),
         preferredInstructors = JsonConvert.SerializeObject(preferredInstructors),
         preferredDays = JsonConvert.SerializeObject(preferredDays),
         PreferredStartTime, PreferredEndTime
-    });
-}
+    }
+       );
+       }
 
 
         //        public async Task MakeScheduler()
