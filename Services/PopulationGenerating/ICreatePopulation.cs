@@ -3,7 +3,7 @@ namespace Scheduler.Services.PopulationGenerating
 {
     public interface ICreatePopulation
     {
-        public List<List<Section>> InitializePopulation(Dictionary<int, List<Section>> sectionsByCourse, int populationSize);
+        public Dictionary<List<Section>, int> InitializePopulation(Dictionary<int, List<Section>> sectionsByCourse, int populationSize);
 
     }
 }

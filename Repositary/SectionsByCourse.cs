@@ -6,7 +6,7 @@ namespace Scheduler.Repositary
 {
     public class SectionsByCourse
     {
-        Dictionary<int, List<Section>> sectionsByCourse;
+        public static Dictionary<int, List<Section>> sectionsByCourse = new Dictionary<int, List<Section>>();
         public Dictionary<int, List<Section>> FindAllSectionsByCourse(List<Course> selectedCourses, DBContextSystem _context)
         {
             foreach (var course in selectedCourses)

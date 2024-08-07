@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using Scheduler.Data;
 using Scheduler.Models;
 using Scheduler.Repositary;
@@ -157,15 +158,17 @@ namespace Scheduler.Controllers
             PreferredEndTime = selectedEndTime;
             return Redirect("SendDataToGenerate");
         }
-        public IActionResult SendDataToGenerate()
-        {
-            ViewBag.selectedCourses = selectedCourses;
-            ViewBag.preferredInstructors = preferredInstructors;
-            ViewBag.preferredDays = preferredDays;
-            ViewBag.PreferredStartTime = PreferredStartTime;
-            ViewBag.PreferredEndTime = PreferredEndTime;
-            return RedirectToAction("Index", "GenerateSchedule");
-        }
+       public IActionResult SendDataToGenerate()
+{
+    return RedirectToAction("Index", "GenerateSchedule", new 
+    { 
+        selectedCourses = JsonConvert.SerializeObject(selectedCourses),
+        preferredInstructors = JsonConvert.SerializeObject(preferredInstructors),
+        preferredDays = JsonConvert.SerializeObject(preferredDays),
+        PreferredStartTime, PreferredEndTime
+    });
+}
+
 
         //        public async Task MakeScheduler()
         //        {
@@ -220,7 +223,7 @@ namespace Scheduler.Controllers
         //                double fitness = 0;
 
         //                // Check for conflicts and completeness
-        //                if (!HasConflict(schedule) && IncludesAllSelectedCourses(schedule, sectionsByCourse))
+        //                if (!CheckForConflict(schedule) && IncludesAllSelectedCourses(schedule, sectionsByCourse))
         //                {
         //                    fitness = 1; // Assign a base fitness score for valid schedules
         //                    fitness += schedule.Count; // Optionally, reward schedules with more courses
@@ -344,7 +347,7 @@ namespace Scheduler.Controllers
         //            }
         //        }
 
-        //        private bool HasConflict(List<Section> sections)
+        //        private bool CheckForConflict(List<Section> sections)
         //        {
         //            foreach (var section1 in sections)
         //            {
