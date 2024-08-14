@@ -35,8 +35,6 @@ namespace Scheduler.Controllers
             population = EvaluateFitness(population);
             population = SelectSchedules(population);
 
-            //ViewData["possibleSchedules"] = population;
-
             return Redirect("DisplaySchedules");
         }
         public Dictionary<List<Section>, int> InitializePopulation()
@@ -54,7 +52,7 @@ namespace Scheduler.Controllers
         {
             if (population.Count > 3)
             {
-                var sortedPopulation = population.OrderBy(entry => entry.Value).Where(entry => entry.Value >=20).ToDictionary(entry => entry.Key, entry => entry.Value);
+                var sortedPopulation = population.OrderByDescending(entry => entry.Value).Take(3).ToDictionary(entry => entry.Key, entry => entry.Value);
                 return sortedPopulation;
             }
 

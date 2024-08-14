@@ -50,7 +50,6 @@ namespace Scheduler.Services.CalculateFitness
         private int CheckForDaysStartEndTime(List<Section> schedule, int PreferredStartTime,int PreferredEndTime,Dictionary<string, bool> preferredDays)
         {
             int score = 0;
-            int maxScorePerDay = 3;
             foreach (var section in schedule)
             { 
                 if (section.Start_Sunday != null)
@@ -84,10 +83,7 @@ namespace Scheduler.Services.CalculateFitness
                     if (preferredDays["Thursday"]) score++;
                 }
             }
-            int maxPossibleScore = maxScorePerDay * 5 * schedule.Count(); // 3 points per day for 5 days, per section
-
-            // Calculate the score as a percentage of 75%
-            return score * 75 / maxPossibleScore;
+            return score;
         }
 
 

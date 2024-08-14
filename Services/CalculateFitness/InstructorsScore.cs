@@ -14,7 +14,7 @@ namespace Scheduler.Services.CalculateFitness
                    if( preferredInstructors.FirstOrDefault(section.Instructors) != null) score++;
                 }
                 var maxInstructor = schedule.Key.Count();
-                population[schedule.Key] += (score * 25 / maxInstructor);
+                population[schedule.Key] += score;
             }
             return population;
         }
