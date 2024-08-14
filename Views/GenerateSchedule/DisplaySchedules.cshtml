@@ -4,15 +4,15 @@
 
 @{
     Layout = null;
-    List<List<Section>> possibleSchedules = ViewData["possibleSchedules"] as List<List<Section>>;
+    Dictionary<List<Section>, int> possibleSchedules = ViewData["possibleSchedules"] as Dictionary<List<Section>, int>;
 }
 
 
 
-@if (possibleSchedules.Count() != 0)
+@if (possibleSchedules != null)
 {
     int number = 0;
-    foreach (var secti in possibleSchedules)
+    foreach (var secti in possibleSchedules.Keys)
     {
         number++;
         <div class="card mb-3">
@@ -57,7 +57,7 @@
                 </div>
             </div>
 
-           
+
 
         </div>
     }

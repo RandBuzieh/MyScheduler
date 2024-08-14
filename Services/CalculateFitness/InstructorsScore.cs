@@ -6,14 +6,15 @@ namespace Scheduler.Services.CalculateFitness
     {
         public Dictionary<List<Section>, int> InstructorScore(Dictionary<List<Section>, int> population, List<Instructor> preferredInstructors)
         {
-            int score = 0;
             foreach (var schedule in population)
             {
-                foreach( var section in schedule.Key)
+                int score = 0;
+                foreach ( var section in schedule.Key)
                 {
-                    if(preferredInstructors.Contains(section.Instructors)) score++;
+                   if( preferredInstructors.FirstOrDefault(section.Instructors) != null) score++;
                 }
-                population[schedule.Key] += score;
+                var maxInstructor = schedule.Key.Count();
+                population[schedule.Key] += (score * 25 / maxInstructor);
             }
             return population;
         }

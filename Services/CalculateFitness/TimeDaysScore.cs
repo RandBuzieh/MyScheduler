@@ -9,6 +9,7 @@ namespace Scheduler.Services.CalculateFitness
             foreach (var schedule in population)
             {
                 population[schedule.Key] += CheckForConflict(schedule.Key);
+                if(population[schedule.Key] >=0)
                 population[schedule.Key] += CheckForDaysStartEndTime(schedule.Key, PreferredStartTime, PreferredEndTime , preferredDays);
             }
 
@@ -22,11 +23,11 @@ namespace Scheduler.Services.CalculateFitness
                 {
                     if (section1 != section2 && AreSectionsConflicting(section1, section2))
                     {
-                        return 0;
+                        return -100;
                     }
                 }
             }
-            return -100;
+            return 0;
         }
 
         private bool AreSectionsConflicting(Section section1, Section section2)
@@ -49,22 +50,44 @@ namespace Scheduler.Services.CalculateFitness
         private int CheckForDaysStartEndTime(List<Section> schedule, int PreferredStartTime,int PreferredEndTime,Dictionary<string, bool> preferredDays)
         {
             int score = 0;
-
+            int maxScorePerDay = 3;
             foreach (var section in schedule)
-            {
-                if(section.Start_Sunday.Value.Hour >= PreferredStartTime || section.Start_Monday.Value.Hour >= PreferredStartTime || section.Start_Tuesday.Value.Hour >= PreferredStartTime
-                 ||  section.Start_Wednesday.Value.Hour >= PreferredStartTime || section.Start_Thursday.Value.Hour >= PreferredStartTime ) score++;
-
-                if(section.End_Sunday.Value.Hour <= PreferredEndTime || section.End_Monday.Value.Hour <= PreferredEndTime || section.End_Tuesday.Value.Hour <= PreferredEndTime
-                        || section.End_Wednesday.Value.Hour <= PreferredEndTime || section.End_Thursday.Value.Hour <= PreferredEndTime) score++;
-
-                if (section.Start_Sunday != null && preferredDays["Sunday"]) score++;
-                if (section.Start_Monday != null && preferredDays["Monday"]) score++;
-                if (section.Start_Tuesday != null && preferredDays["Tuesday"]) score++;
-                if (section.Start_Wednesday != null && preferredDays["Wednesday"]) score++;
-                if (section.Start_Thursday != null && preferredDays["Thursday"]) score++;
+            { 
+                if (section.Start_Sunday != null)
+                {
+                    if (section.Start_Sunday.Value.Hour >= PreferredStartTime) score++;
+                    if (section.End_Sunday.Value.Hour >= PreferredEndTime) score++;
+                    if (preferredDays["Sunday"]) score++;
+                }
+                if (section.Start_Monday != null)
+                {
+                    if (section.Start_Monday.Value.Hour >= PreferredStartTime) score++;
+                    if (section.End_Monday.Value.Hour >= PreferredEndTime) score++;
+                    if (preferredDays["Monday"]) score++;
+                }
+                if (section.Start_Tuesday != null)
+                {
+                    if (section.Start_Tuesday.Value.Hour >= PreferredStartTime) score++;
+                    if (section.End_Tuesday.Value.Hour >= PreferredEndTime) score++;
+                    if (preferredDays["Tuesday"]) score++;
+                }
+                if (section.Start_Wednesday != null)
+                {
+                    if (section.Start_Wednesday.Value.Hour >= PreferredStartTime) score++;
+                    if (section.End_Wednesday.Value.Hour >= PreferredEndTime) score++;
+                    if (preferredDays["Wednesday"]) score++;
+                }
+                if (section.Start_Thursday != null)
+                {
+                    if (section.Start_Thursday.Value.Hour >= PreferredStartTime) score++;
+                    if (section.End_Thursday.Value.Hour >= PreferredEndTime) score++;
+                    if (preferredDays["Thursday"]) score++;
+                }
             }
-            return score * 75 / schedule.Capacity;
+            int maxPossibleScore = maxScorePerDay * 5 * schedule.Count(); // 3 points per day for 5 days, per section
+
+            // Calculate the score as a percentage of 75%
+            return score * 75 / maxPossibleScore;
         }
 
 

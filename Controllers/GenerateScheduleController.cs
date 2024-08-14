@@ -18,6 +18,7 @@ namespace Scheduler.Controllers
         public static SectionsByCourse _sectionsByCourse = new SectionsByCourse();
         public static ICreatePopulation _iCreatePopulation = new CreatePopulation();
         public static IFitnessCheck _IFitnessCheck = new FitnessCheck();
+        public static Dictionary<List<Section>, int> population = new Dictionary<List<Section>, int>();
 
         public GenerateScheduleController(DBContextSystem context)
         {  
@@ -30,11 +31,13 @@ namespace Scheduler.Controllers
             GenerateScheduleController.preferredDays = JsonConvert.DeserializeObject<Dictionary<string, bool>>(preferredDays);
             GenerateScheduleController.PreferredStartTime = PreferredStartTime;
             GenerateScheduleController.PreferredEndTime = PreferredEndTime;
-            var population = InitializePopulation();
+            population = InitializePopulation();
             population = EvaluateFitness(population);
-            ViewData["possibleSchedules"] = population;
+            population = SelectSchedules(population);
 
-            return View();
+            //ViewData["possibleSchedules"] = population;
+
+            return Redirect("DisplaySchedules");
         }
         public Dictionary<List<Section>, int> InitializePopulation()
         {
@@ -46,6 +49,24 @@ namespace Scheduler.Controllers
         {
             var evaluatedPopulation = _IFitnessCheck.CalculateFitness(population, PreferredStartTime, PreferredEndTime, preferredDays, preferredInstructors);
             return evaluatedPopulation;
+        }
+        public Dictionary<List<Section>, int> SelectSchedules(Dictionary<List<Section>, int> population)
+        {
+            if (population.Count > 3)
+            {
+                var sortedPopulation = population.OrderBy(entry => entry.Value).Where(entry => entry.Value >=20).ToDictionary(entry => entry.Key, entry => entry.Value);
+                return sortedPopulation;
+            }
+
+            return population;
+        }
+
+
+        public async Task<IActionResult> DisplaySchedules()
+        {
+            ViewData["possibleSchedules"] = population;
+
+            return View();
         }
 
     }
