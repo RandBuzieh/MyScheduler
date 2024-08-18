@@ -4,16 +4,14 @@ namespace Scheduler.Services.CalculateFitness
 {
     public class TimeDaysScore
     {
-        public Dictionary<List<Section>, int> CalculateTimeDaysScore(Dictionary<List<Section>, int> population,int PreferredStartTime, int PreferredEndTime, Dictionary<string, bool> preferredDays)
+        public int CalculateTimeDaysScore(Dictionary<List<Section>, int> population,KeyValuePair<List<Section>, int> schedule,int PreferredStartTime, int PreferredEndTime, Dictionary<string, bool> preferredDays)
         {
-            foreach (var schedule in population)
-            {
-                population[schedule.Key] += CheckForConflict(schedule.Key);
-                if(population[schedule.Key] >=0)
-                population[schedule.Key] += CheckForDaysStartEndTime(schedule.Key, PreferredStartTime, PreferredEndTime , preferredDays);
-            }
+                int score =0;
+                score += CheckForConflict(schedule.Key);
+                if(score >= 0)
+                score += CheckForDaysStartEndTime(schedule.Key, PreferredStartTime, PreferredEndTime , preferredDays);
 
-            return population;
+            return score;
         }
         private int CheckForConflict(List<Section> schedule)
         {
