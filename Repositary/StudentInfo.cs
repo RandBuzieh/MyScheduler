@@ -16,7 +16,8 @@ namespace Scheduler.Repositary
 
             return completedCourseIds;
         }
-        public List<Course> GetAvailableCoursesAsync(Student _student , DBContextSystem _context)
+      
+        public List<Course> GetAvailableCoursesAsync(Student _student, DBContextSystem _context)
         {
             var completedCourseIds = FinishedCourses(_student, _context);
 
@@ -25,7 +26,6 @@ namespace Scheduler.Repositary
                 .Select(dc => dc.course)
                 .Distinct()
                 .ToList();
-
 
             // Remove courses that need a prerequisite
             var coursesStudentCanTake = new List<Course>();
@@ -42,20 +42,23 @@ namespace Scheduler.Repositary
                     coursesStudentCanTake.Add(course);
                 }
             }
+
             var studyPlanId = _context.Students
                 .Where(s => s.KeyStudent == _student.KeyStudent)
                 .Select(s => s.studyPlan.IdStudyPlan)
                 .FirstOrDefault();
 
-            // Fetch courses from the _student's study plan
+            // Fetch courses from the _student's study plan and ensure they have sections
             var studyPlanCourses = _context.PlanContents
                 .Where(pc => pc.StudyPlan.IdStudyPlan == studyPlanId)
                 .Where(pc => coursesStudentCanTake.Contains(pc.course))
+                .Where(pc => _context.Sections.Any(s => s.course.IDCRS == pc.course.IDCRS))
                 .Select(pc => pc.course)
                 .Distinct()
                 .ToList();
-            return studyPlanCourses;
 
+            return studyPlanCourses;
         }
+
     }
 }

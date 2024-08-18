@@ -52,10 +52,11 @@ namespace Scheduler.Controllers
         {
             if (population.Count > 3)
             {
-                var sortedPopulation = population.OrderByDescending(entry => entry.Value).Take(3).ToDictionary(entry => entry.Key, entry => entry.Value);
+                var sortedPopulation = population.OrderByDescending(entry => entry.Value).Take(3).Where(entry=> entry.Value>0).ToDictionary(entry => entry.Key, entry => entry.Value);
                 return sortedPopulation;
             }
 
+            population =  population.Where(entry => entry.Value > 0).ToDictionary(entry => entry.Key, entry => entry.Value);
             return population;
         }
 

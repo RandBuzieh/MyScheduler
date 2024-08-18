@@ -9,7 +9,7 @@
 
 
 
-@if (possibleSchedules != null)
+@if (possibleSchedules != null && possibleSchedules.Count>0)
 {
     int number = 0;
     foreach (var secti in possibleSchedules.Keys)
@@ -61,4 +61,8 @@
 
         </div>
     }
+}
+else
+{
+    <h1>No Possible Schedules</h1>
 }
