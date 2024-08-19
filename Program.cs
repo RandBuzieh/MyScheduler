@@ -1,10 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Scheduler.Data;
+using Scheduler.Services.PopulationGenerating;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<ICreatePopulation,CreatePopulation>();
+
 
 builder.Services.AddDbContext<DBContextSystem>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -29,6 +32,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Login}/{id?}");
+    pattern: "{controller=CollectData}/{action=Login}/{id?}");
 
 app.Run();

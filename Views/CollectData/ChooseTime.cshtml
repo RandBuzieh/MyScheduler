@@ -1,0 +1,29 @@
+﻿@{
+    List<int> startHours = ViewBag.startHours as List<int>;
+    List<int> endHours = ViewBag.endHours as List<int>;
+}
+<form asp-controller="CollectData" asp-action="ChooseTime" method="post">
+
+    <div>
+        <label for="selectedStartTime">Choose a Start Time:</label>
+
+        <select id="selectedStartTime" name="selectedStartTime" class="form-control">
+            @foreach (var h in startHours)
+            {
+                <option value=@h>@h</option>
+            }
+        </select>
+    </div>
+    <div>
+        <label for="selectedEndTime">Choose an End Time:</label>
+
+        <select id="selectedEndTime" name="selectedEndTime" class="form-control">
+            @foreach (var h in endHours)
+            {
+                <option value=@h>@h</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit">Submit</button>
+</form>
